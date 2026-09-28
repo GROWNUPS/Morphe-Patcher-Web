@@ -146,7 +146,7 @@ Open your browser and navigate to:
 ```
 http://<your-server-ip>:8080
 ```
-
+(Or use custom port inside .env file if 8080 is unavailable)
 ---
 
 ## 📁 Directory Structure & Mounts
