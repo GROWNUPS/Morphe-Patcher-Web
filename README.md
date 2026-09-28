@@ -15,7 +15,6 @@
 </p>
 
 <p align="center"><sub><i>🤖 This project was built with AI assistance and is intended for personal use. It may contain bugs or rough edges. Review the code and use it at your own risk, especially before exposing it beyond your local network 🤖</i></sub></p>
----
 
 ## 📸 Screenshots (Dark Mode)
 
