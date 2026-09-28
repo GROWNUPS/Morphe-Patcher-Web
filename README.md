@@ -127,10 +127,74 @@ Morphe Patcher Web is distributed as an automated multi-arch container (`linux/a
 
 ---
 
-### Option A: Docker Compose (Recommended)
+### Option A: Deploy via Docker Compose (Recommended)
 
-Save the following as `docker-compose.yml` on your server and run `docker compose up -d`:
+Choose between keeping configuration in a separate `.env` file or defining everything inline:
 
+#### 1. With `.env` File (Clean & Modular)
+
+Ideal if you want to keep your ports, permissions, and webhook URLs neatly separated from your Compose definition.
+
+**`docker-compose.yml`**:
+```yaml
+services:
+  morphe-patcher:
+    image: ghcr.io/grownups/morphe-patcher-web:latest
+    container_name: morphe-patcher
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+      - JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx2048m -XX:+UseContainerSupport}
+      - AUTO_WATCH=${AUTO_WATCH:-true}
+      - WATCH_DEBOUNCE_SECONDS=${WATCH_DEBOUNCE_SECONDS:-5}
+      - WATCH_ACTION_AFTER_PATCH=${WATCH_ACTION_AFTER_PATCH:-archive}
+      - AUTO_UPDATE_PATCHES=${AUTO_UPDATE_PATCHES:-true}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+    volumes:
+      - ./watch:/app/watch
+      - ./output:/app/output
+      - ./config:/app/config
+      - ./cache:/app/cache
+    restart: unless-stopped
+```
+
+**`.env`** (create next to `docker-compose.yml`):
+```bash
+PORT=8080
+PUID=1000
+PGID=1000
+TZ=Etc/UTC
+
+# Hot-Folder Watcher
+AUTO_WATCH=true
+WATCH_DEBOUNCE_SECONDS=5
+WATCH_ACTION_AFTER_PATCH=archive
+
+# Optional Webhook Notifications (Discord, ntfy.sh, Gotify)
+WEBHOOK_URL=
+
+# Patches Lifecycle
+AUTO_UPDATE_PATCHES=true
+```
+
+Start the container:
+```bash
+docker compose up -d
+```
+
+> [!TIP]
+> Docker Compose automatically detects and loads the `.env` file in the same directory. If any variable is omitted from `.env`, it automatically falls back to the safe default specified after `:-` (e.g. `${PORT:-8080}`).
+
+---
+
+#### 2. Without `.env` File (Inline / Single File)
+
+If you prefer a single self-contained file without creating an extra `.env` file:
+
+**`docker-compose.yml`**:
 ```yaml
 services:
   morphe-patcher:
@@ -144,6 +208,8 @@ services:
       - TZ=Etc/UTC
       - AUTO_WATCH=true
       - AUTO_UPDATE_PATCHES=true
+      - WATCH_ACTION_AFTER_PATCH=archive
+      # - WEBHOOK_URL=https://discord.com/api/webhooks/...
     volumes:
       - ./watch:/app/watch
       - ./output:/app/output
@@ -152,6 +218,7 @@ services:
     restart: unless-stopped
 ```
 
+Start the container:
 ```bash
 docker compose up -d
 ```
@@ -173,6 +240,7 @@ docker run -d \
   --restart unless-stopped \
   ghcr.io/grownups/morphe-patcher-web:latest
 ```
+*(Tip: Pass custom environment flags using `-e KEY=VALUE` or load a `.env` file via `--env-file .env`)*
 
 ---
 
