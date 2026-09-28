@@ -266,7 +266,8 @@ Open your browser and navigate to:
 ```
 http://<your-server-ip>:8080
 ```
-*(Or use your custom port if configured)*
+(Or the custom port mentioned in env if 8080 is occupied)
+
 ---
 
 ## 📁 Directory Structure & Mounts
