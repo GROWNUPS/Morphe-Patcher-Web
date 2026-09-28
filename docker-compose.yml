@@ -1,0 +1,30 @@
+services:
+  morphe-patcher:
+    build: .
+    image: morphe-patcher-web:latest
+    container_name: morphe-patcher
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      - PUID=${PUID:-1000}
+      - PGID=${PGID:-1000}
+      - TZ=${TZ:-Etc/UTC}
+      - JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx2048m -XX:+UseContainerSupport}
+      - AUTO_WATCH=${AUTO_WATCH:-true}
+      - WATCH_DEBOUNCE_SECONDS=${WATCH_DEBOUNCE_SECONDS:-5}
+      - WATCH_ACTION_AFTER_PATCH=${WATCH_ACTION_AFTER_PATCH:-archive} # 'archive', 'delete', or 'keep'
+      - WEBHOOK_URL=${WEBHOOK_URL:-} # e.g. https://ntfy.sh/my-topic or Discord webhook URL
+      - AUTO_UPDATE_PATCHES=${AUTO_UPDATE_PATCHES:-true}
+      - MORPHE_PATCHES_REPO=${MORPHE_PATCHES_REPO:-MorpheApp/morphe-patches}
+    volumes:
+      # Watched hot folder: Drop unpatched APKs here to patch automatically
+      - ./watch:/app/watch
+      # Output folder: Patched APKs appear here
+      - ./output:/app/output
+      # Persistent configuration, keystores, and profiles
+      - ./config:/app/config
+      # Cache and scratch space
+      - ./cache:/app/cache
+      # Optional: Mount your own custom morphe-desktop.jar if desired:
+      # - ./morphe-desktop.jar:/app/config/morphe-desktop.jar:ro
+    restart: unless-stopped

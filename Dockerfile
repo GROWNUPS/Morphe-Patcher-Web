@@ -1,0 +1,31 @@
+FROM eclipse-temurin:21-jre-jammy
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PORT=8080
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    curl \
+    ca-certificates \
+    gosu \
+    tzdata \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY requirements.txt /app/requirements.txt
+RUN pip3 install --no-cache-dir -r /app/requirements.txt
+
+RUN mkdir -p /app/watch /app/output /app/config /app/cache
+
+COPY app/ /app/app/
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+VOLUME ["/app/watch", "/app/output", "/app/config", "/app/cache"]
+EXPOSE 8080
+
+ENTRYPOINT ["/entrypoint.sh"]

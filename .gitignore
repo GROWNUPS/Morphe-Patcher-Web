@@ -1,0 +1,64 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+
+# Local data & mounted runtime folders
+cache/*
+!cache/.gitkeep
+output/*
+!output/.gitkeep
+watch/*
+!watch/.gitkeep
+!watch/processed/
+watch/processed/*
+!watch/processed/.gitkeep
+
+# Persistent keystores and local secrets
+config/keystore/*.keystore
+config/keystore/*.jks
+config/keystore/*.p12
+config/keystore/keystore_config.json
+.env
+
+# Downloaded runtime binaries (auto-fetched on start)
+config/morphe-desktop.jar
+config/patches.mpp
+config/patches/*.mpp
+morphe-desktop.jar
+
+# IDE & OS files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Archives
+*.tar
+*.tar.gz
+*.tgz
