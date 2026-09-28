@@ -71,8 +71,7 @@ flowchart LR
 > **Important Security Notice**: Morphe Patcher Web was created for home local area networks (LAN) and trusted homelab environments. The dashboard allows file uploads, arbitrary URL downloads, custom keystore operations, and executes CLI processes on the host.
 > 
 > **Do NOT expose this application directly to the open internet without an authentication layer and HTTPS reverse proxy!**
-
-If you want to access Morphe Patcher Web remotely outside your home network, place it behind a **Reverse Proxy** with **Authentication**, or access it through a private overlay network (such as **Tailscale** or **WireGuard**).
+> If you want to access Morphe Patcher Web remotely outside your home network, place it behind a **Reverse Proxy** with **Authentication**, or access it through a private overlay network (such as **Tailscale** or **Netbird**).
 
 
 ---
