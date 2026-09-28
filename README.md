@@ -140,6 +140,19 @@ cp .env.example .env
 docker compose up -d
 ```
 
+*(Or run directly via GHCR without cloning)*:
+```bash
+docker run -d \
+  --name morphe-patcher \
+  -p 8080:8080 \
+  -v ./watch:/app/watch \
+  -v ./output:/app/output \
+  -v ./config:/app/config \
+  -v ./cache:/app/cache \
+  --restart unless-stopped \
+  ghcr.io/grownups/morphe-patcher-web:latest
+```
+
 ### 4. Access the Dashboard
 Open your browser and navigate to:
 ```

@@ -1,7 +1,7 @@
 services:
   morphe-patcher:
     build: .
-    image: morphe-patcher-web:latest
+    image: ghcr.io/grownups/morphe-patcher-web:latest
     container_name: morphe-patcher
     ports:
       - "${PORT:-8080}:8080"
