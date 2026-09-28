@@ -7,7 +7,7 @@
 
 <p align="center">
   <a href="https://github.com/MorpheApp/morphe-desktop"><img src="https://img.shields.io/badge/Morphe%20CLI-Compatible-blueviolet?logo=android&logoColor=white" alt="Morphe CLI"></a>
-  <img src="https://img.shields.io/badge/Docker-Ready-2496ED?logo=docker&logoColor=white" alt="Docker">
+  <a href="https://github.com/GROWNUPS/Morphe-Patcher-Web/pkgs/container/morphe-patcher-web"><img src="https://img.shields.io/badge/GHCR.io-Docker%20Image-2496ED?logo=docker&logoColor=white" alt="GHCR Docker Image"></a>
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-Framework-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Architecture-ARM64%20%7C%20AMD64-blue" alt="Arch">
@@ -123,24 +123,45 @@ flowchart LR
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/GROWNUPS/Morphe-Patcher-Web.git
-cd Morphe-Patcher-Web
+Morphe Patcher Web is distributed as an automated multi-arch container (`linux/amd64` and `linux/arm64`) on GitHub Container Registry (**GHCR**). You can run it instantly without cloning the source code.
+
+---
+
+### Option A: Docker Compose (Recommended)
+
+Save the following as `docker-compose.yml` on your server and run `docker compose up -d`:
+
+```yaml
+services:
+  morphe-patcher:
+    image: ghcr.io/grownups/morphe-patcher-web:latest
+    container_name: morphe-patcher
+    ports:
+      - "8080:8080"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
+      - AUTO_WATCH=true
+      - AUTO_UPDATE_PATCHES=true
+    volumes:
+      - ./watch:/app/watch
+      - ./output:/app/output
+      - ./config:/app/config
+      - ./cache:/app/cache
+    restart: unless-stopped
 ```
 
-### 2. Configure Environment (Optional)
-```bash
-cp .env.example .env
-```
-*(Customize `PORT`, `PUID`, `PGID`, or `WEBHOOK_URL` if needed)*
-
-### 3. Launch with Docker Compose
 ```bash
 docker compose up -d
 ```
 
-*(Or run directly via GHCR without cloning)*:
+---
+
+### Option B: Docker CLI (`docker run`)
+
+Run standalone directly from your terminal:
+
 ```bash
 docker run -d \
   --name morphe-patcher \
@@ -153,12 +174,31 @@ docker run -d \
   ghcr.io/grownups/morphe-patcher-web:latest
 ```
 
-### 4. Access the Dashboard
+---
+
+### Option C: Build from Source
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/GROWNUPS/Morphe-Patcher-Web.git
+cd Morphe-Patcher-Web
+
+# 2. Configure environment (optional)
+cp .env.example .env
+
+# 3. Launch with Docker Compose
+docker compose up -d --build
+```
+
+---
+
+### 🌐 Access the Dashboard
+
 Open your browser and navigate to:
 ```
 http://<your-server-ip>:8080
 ```
-#### (Or use custom port inside .env file if 8080 is unavailable)
+*(Or use your custom port if configured)*
 ---
 
 ## 📁 Directory Structure & Mounts
