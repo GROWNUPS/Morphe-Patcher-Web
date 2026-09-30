@@ -970,4 +970,119 @@ main {
   background: var(--btn-sec-hover);
 }
 
+/* Profiles Management */
+.profiles-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.profile-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.profile-card:hover {
+  border-color: var(--border-focus);
+  background: var(--bg-card-hover);
+  box-shadow: var(--card-shadow);
+}
+
+.profile-card.is-default {
+  border-color: rgba(99, 102, 241, 0.45);
+  background: linear-gradient(180deg, rgba(99, 102, 241, 0.06) 0%, var(--bg-card) 100%);
+}
+
+.profile-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.profile-card-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.profile-card-pkg {
+  font-size: 0.78rem;
+  font-family: monospace;
+  color: var(--text-muted);
+  margin-top: 0.2rem;
+  word-break: break-all;
+}
+
+.profile-details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0.85rem 0 1.15rem 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+}
+
+.profile-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.profile-detail-label {
+  font-weight: 500;
+}
+
+.profile-detail-val {
+  font-weight: 600;
+  color: var(--text-main);
+  font-family: monospace;
+  font-size: 0.8rem;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 180px;
+}
+
+.profile-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.tag-pill {
+  cursor: pointer;
+  user-select: none;
+}
+.tag-pill:hover {
+  background: var(--primary) !important;
+  color: white !important;
+}
+
+details.advanced-details-box summary::-webkit-details-marker {
+  display: none;
+}
+details.advanced-details-box[open] {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+
 

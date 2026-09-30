@@ -1,0 +1,15 @@
+{
+  "id": "youtube_morphe",
+  "name": "YouTube Morphe",
+  "package_name": "com.google.android.youtube",
+  "description": "Default preset for YouTube with Morphe branding and ARM64 optimization.",
+  "branding": "custom",
+  "custom_app_name": "{appName} Morphe",
+  "output_format": "{appName}_{version}_{arch}_patched.apk",
+  "optimize_arch": true,
+  "target_arch": "arm64-v8a",
+  "is_default": true,
+  "include_patches": [],
+  "exclude_patches": [],
+  "patch_options": {}
+}

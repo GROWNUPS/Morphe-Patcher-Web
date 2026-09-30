@@ -28,31 +28,106 @@ class CreateJobRequest(BaseModel):
 class BatchJobRequest(BaseModel):
     jobs: List[CreateJobRequest]
 
+from app.core.profiles import (
+    get_profile,
+    get_default_profile_for_package,
+    resolve_naming_template,
+    resolve_filename_template,
+)
+from app.core.apk_inspector import inspect_apk
+
 def _prepare_job(req: CreateJobRequest) -> Job:
     input_path = Path(req.file_path)
     if not input_path.exists():
         raise HTTPException(status_code=404, detail=f"Input file does not exist: {req.file_path}")
 
-    options_file = None
-    if req.profile_name:
-        prof = PROFILES_DIR / f"{req.profile_name}.json"
-        if prof.exists():
-            options_file = prof
+    # Inspect app name if possible
+    app_name = req.package_name or "App"
+    try:
+        apk_info = inspect_apk(input_path)
+        app_name = apk_info.get("app_name") or app_name
+    except Exception:
+        pass
 
+    # Resolve Profile
+    profile = None
+    if req.profile_name:
+        profile = get_profile(req.profile_name)
+    elif req.package_name:
+        profile = get_default_profile_for_package(req.package_name)
+
+    options_file = None
+    if profile and profile.get("is_legacy"):
+        prof_file = PROFILES_DIR / f"{profile['id']}.json"
+        if prof_file.exists():
+            options_file = prof_file
+
+    # Resolve Architecture / Striplibs
+    strip_libs = req.strip_libs
+    if strip_libs is None and profile and profile.get("optimize_arch"):
+        strip_libs = profile.get("target_arch", "arm64-v8a")
+
+    # Resolve Output Filename
+    output_filename = req.output_filename
+    if not output_filename:
+        if profile and profile.get("output_format"):
+            output_filename = resolve_filename_template(
+                profile["output_format"],
+                app_name=app_name,
+                version=req.version_name or "",
+                arch=strip_libs or "universal",
+            )
+        else:
+            clean_app = app_name.lower().replace(" ", "_")
+            ver_tag = f"_{req.version_name}" if req.version_name else ""
+            arch_tag = "_arm64" if strip_libs == "arm64-v8a" else ("_arm32" if strip_libs == "armeabi-v7a" else "")
+            output_filename = f"{clean_app}{ver_tag}{arch_tag}_patched.apk"
+    else:
+        # Resolve any placeholders if provided in custom filename
+        output_filename = resolve_filename_template(
+            output_filename,
+            app_name=app_name,
+            version=req.version_name or "",
+            arch=strip_libs or "universal",
+        )
+
+    # Inclusions & Exclusions
     excludes = list(req.exclude_patches or [])
     includes = list(req.include_patches or [])
-    patch_options = None
+    if profile:
+        for p in profile.get("exclude_patches", []):
+            if p not in excludes:
+                excludes.append(p)
+        for p in profile.get("include_patches", []):
+            if p not in includes:
+                includes.append(p)
 
-    if req.branding == "original":
+    # Resolve Branding
+    branding = req.branding
+    if not branding and profile:
+        branding = profile.get("branding", "original")
+
+    custom_app_name = req.custom_app_name
+    if not custom_app_name and profile and profile.get("branding") == "custom":
+        custom_app_name = profile.get("custom_app_name")
+
+    patch_options = None
+    if branding == "original":
         # Disabling Custom branding and Change header keeps original name & icon
         if "Custom branding" not in excludes:
             excludes.append("Custom branding")
         if "Change header" not in excludes:
             excludes.append("Change header")
-    elif req.branding == "custom" and req.custom_app_name and req.custom_app_name.strip():
+    elif branding == "custom" and custom_app_name and custom_app_name.strip():
+        resolved_name = resolve_naming_template(
+            custom_app_name.strip(),
+            app_name=app_name,
+            version=req.version_name or "",
+            arch=strip_libs or "",
+        )
         patch_options = {
             "Custom branding": {
-                "customName": req.custom_app_name.strip()
+                "customName": resolved_name
             }
         }
 
@@ -72,14 +147,14 @@ def _prepare_job(req: CreateJobRequest) -> Job:
 
     return Job(
         input_path=input_path,
-        output_filename=req.output_filename,
+        output_filename=output_filename,
         source="WEB_UPLOAD",
         package_name=req.package_name,
         version_name=req.version_name,
         options_file=options_file,
         include_patches=includes if includes else None,
         exclude_patches=excludes if excludes else None,
-        strip_libs=req.strip_libs,
+        strip_libs=strip_libs,
         patch_options=patch_options,
         custom_patches_mpp=custom_patches_mpp,
     )

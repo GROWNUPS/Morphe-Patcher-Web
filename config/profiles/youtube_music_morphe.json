@@ -1,0 +1,15 @@
+{
+  "id": "youtube_music_morphe",
+  "name": "YouTube Music Morphe",
+  "package_name": "com.google.android.apps.youtube.music",
+  "description": "Default preset for YouTube Music with Morphe branding.",
+  "branding": "custom",
+  "custom_app_name": "{appName} Morphe",
+  "output_format": "{appName}_{version}_{arch}_patched.apk",
+  "optimize_arch": true,
+  "target_arch": "arm64-v8a",
+  "is_default": true,
+  "include_patches": [],
+  "exclude_patches": [],
+  "patch_options": {}
+}

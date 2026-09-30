@@ -24,15 +24,15 @@
 
 ## 📸 Screenshots (Dark Mode)
 
-| 1. Dashboard | 2. Upload Inspection |
+| 1. Dashboard | 2. Live Terminal |
 | :---: | :---: |
-| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Upload Inspection](docs/screenshots/02-upload-inspection.png) |
-| *Target version guidance, APKMirror direct links, and patch bundle overview* | *Drag-and-drop / URL import, package detection, and live compatibility rating* |
+| ![Dashboard](docs/screenshots/01-dashboard.png) | ![Live Terminal](docs/screenshots/02-live-terminal.png) |
+| *Target version guidance, Patch bundle & Package Detection Overview* | *Real-time CLI execution logs streamed via Server-Sent Events* |
 
-| 3. Live Terminal | 4. Output APK Page |
+| 3. Preset Profiles | 4. Output APK Page |
 | :---: | :---: |
-| ![Live Terminal](docs/screenshots/03-live-terminal.png) | ![Output APK Page](docs/screenshots/04-output-apk.png) |
-| *Real-time CLI execution logs streamed via Server-Sent Events* | *Completed APK library, one-click downloads* |
+| ![Preset Profiles](docs/screenshots/03-preset-profiles.png) | ![Output APK Page](docs/screenshots/04-output-apk.png) |
+| *Configure per-app custom naming, output filename templates and more* | *Completed APK library, one-click downloads* |
 
 | 5. Hot Folder Watcher | 6. Settings Page — Keystore & Patches |
 | :---: | :---: |
@@ -57,7 +57,8 @@ Patching Android applications using patchers like Morphe have some friction :
 
 - **100% Headless & Containerized**: Runs in lightweight Docker containers across x86_64 and ARM64 (Raspberry Pi, mini PCs, NAS devices). No GUI or display server required.
 - **Zero Guesswork Target Guidance**: Inspects the patch bundle dynamically via Morphe CLI to show you exact recommended APK versions, and provides 1-click direct search links to APKMirror.
-- **Automated Hot-Folder (`./watch`)**: Drop APKs over SMB, NFS, or Nextcloud; the daemon automatically detects them, matches the target package, applies the patches, and moves them to `./output`.
+- **Patch Profiles & Automated Branding**: Configure per-app custom naming (e.g. `{appName} Morphe`), output filename templates, and architecture optimizations once—Patchium auto-applies them every time.
+- **Automated Hot-Folder (`./watch`)**: Drop APKs over SMB, NFS, or Nextcloud; the daemon automatically detects them, matches the target package, applies your preset profile, and moves them to `./output`.
 - **Instant Direct Downloads & Webhooks**: Download finished APKs with 1-click or copy download links, with automated completion alerts sent via Discord, ntfy.sh, or Gotify.
 - **Consistent Signatures**: Creates and persists an Android keystore across builds so app updates can be installed without signature mismatch warnings or having to uninstall previous builds.
 
@@ -98,6 +99,15 @@ flowchart LR
 - **Automatic Startup Checks**: When enabled (`AUTO_UPDATE_PATCHES=true`), checks GitHub releases on startup and pulls newer `.mpp` bundles seamlessly.
 - **1-Click In-App Update**: Click **`[🔄 Update Patches]`** directly in the dashboard to query GitHub, download new patches, and update recommendations in real time without restarting.
 - **Community & Custom Bundles**: Easily drop in third-party or custom `.mpp` patch packages via the Web UI or `./config/patches.mpp`.
+
+### 📋 Patch Profiles & Presets (Automated Branding)
+- **Per-App & Universal Presets**: Create reusable presets customized for specific packages (e.g. YouTube, YouTube Music, Reddit) or universal presets that apply across all apps.
+- **Dynamic Template Engine (`{appName} Morphe`)**: Configure custom branding templates using `{appName}` (or `{app_name}`). Patchium automatically resolves the detected app title (e.g. *YouTube* $\rightarrow$ **"YouTube Morphe"**, *YouTube Music* $\rightarrow$ **"YouTube Music Morphe"**)—no more tedious manual typing for every build.
+- **Custom Output Filename Templates**: Define flexible output patterns with dynamic placeholder chips (`{appName}`, `{version}`, `{arch}`) for clean, predictable naming across your entire library.
+- **Context-Aware Smart Filtering**: When an APK is uploaded, the dashboard automatically filters available presets to match that specific app and pre-selects your designated default preset.
+- **Streamlined Inspect Screen**: Replaced clutter with a primary Preset Selector, active configuration summary chip, and a collapsible **"⚙️ Advanced Options & Overrides"** accordion for occasional one-off tweaks.
+- **1-Click Preset Creator**: Jump directly from the inspect screen into the profile creator with the uploaded APK's package name and detected app title pre-filled.
+- **Deep Hot-Folder Daemon Integration**: The `./watch` daemon automatically identifies default profiles matching incoming APK packages and applies their custom branding, architecture, and output filename templates autonomously.
 
 ### 📥 Flexible APK Import
 - **Drag & Drop Upload**: Upload APKs directly from your browser.

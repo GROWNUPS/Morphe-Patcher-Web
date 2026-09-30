@@ -18,6 +18,11 @@ from app.config import (
 )
 from app.core.apk_inspector import inspect_apk
 from app.core.queue_manager import queue_manager, Job
+from app.core.profiles import (
+    get_default_profile_for_package,
+    resolve_naming_template,
+    resolve_filename_template,
+)
 
 logger = logging.getLogger("morphe.watcher")
 
@@ -99,11 +104,50 @@ class HotFolderWatcher:
             ver = info.get("version_name") or "unknown"
             app_name = info.get("app_name") or file_path.stem
 
-            profile_file = PROFILES_DIR / f"{pkg}.json"
-            options_file = profile_file if profile_file.exists() else None
+            profile = get_default_profile_for_package(pkg)
+            options_file = None
+            if profile and profile.get("is_legacy"):
+                prof_file = PROFILES_DIR / f"{profile['id']}.json"
+                if prof_file.exists():
+                    options_file = prof_file
 
-            clean_app = app_name.lower().replace(" ", "_")
-            out_filename = f"{clean_app}_{ver}_morphe_patched.apk"
+            strip_libs = profile.get("target_arch", "arm64-v8a") if profile and profile.get("optimize_arch") else "arm64-v8a"
+
+            if profile and profile.get("output_format"):
+                out_filename = resolve_filename_template(
+                    profile["output_format"],
+                    app_name=app_name,
+                    version=ver,
+                    arch=strip_libs,
+                )
+            else:
+                clean_app = app_name.lower().replace(" ", "_")
+                out_filename = f"{clean_app}_{ver}_morphe_patched.apk"
+
+            branding = profile.get("branding", "custom") if profile else "custom"
+            custom_app_name = profile.get("custom_app_name", "{appName} Morphe") if profile else "{appName} Morphe"
+
+            excludes = list(profile.get("exclude_patches", [])) if profile else []
+            includes = list(profile.get("include_patches", [])) if profile else []
+            patch_options = None
+
+            if branding == "original":
+                if "Custom branding" not in excludes:
+                    excludes.append("Custom branding")
+                if "Change header" not in excludes:
+                    excludes.append("Change header")
+            elif branding == "custom" and custom_app_name:
+                resolved_app_name = resolve_naming_template(
+                    custom_app_name,
+                    app_name=app_name,
+                    version=ver,
+                    arch=strip_libs,
+                )
+                patch_options = {
+                    "Custom branding": {
+                        "customName": resolved_app_name
+                    }
+                }
 
             job = Job(
                 input_path=file_path,
@@ -112,8 +156,13 @@ class HotFolderWatcher:
                 package_name=pkg,
                 version_name=ver,
                 options_file=options_file,
+                include_patches=includes if includes else None,
+                exclude_patches=excludes if excludes else None,
+                strip_libs=strip_libs,
+                patch_options=patch_options,
             )
-            job.add_log(f"Auto-detected in watch folder. Target package: {pkg} ({ver})")
+            prof_label = f" with profile '{profile['name']}'" if profile else ""
+            job.add_log(f"Auto-detected in watch folder. Target: {pkg} ({ver}){prof_label}")
             await queue_manager.submit_job(job)
 
             asyncio.create_task(self._handle_post_patch_action(job, file_path))

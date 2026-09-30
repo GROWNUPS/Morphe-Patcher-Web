@@ -12,12 +12,14 @@ document.addEventListener("DOMContentLoaded", () => {
   setupOutputs();
   setupSystem();
   setupPatchUpdateHandlers();
+  setupProfiles();
   
   fetchSystemStatus();
   fetchOutputs();
   fetchPatchSources();
   fetchKeystoreDetails();
   fetchCompatibleVersions();
+  loadProfilesList();
   setInterval(() => {
     fetchSystemStatus();
     if (document.querySelector('.tab-btn[data-tab="terminal"]')?.classList.contains('active')) {
@@ -83,6 +85,8 @@ function switchTab(tabName) {
     refreshTerminalQueue();
   } else if (tabName === "watcher") {
     fetchSystemStatus();
+  } else if (tabName === "profiles") {
+    loadProfilesList();
   } else if (tabName === "system") {
     fetchSystemStatus();
     fetchKeystoreDetails();
@@ -375,6 +379,34 @@ function setupUpload() {
             patchSourceBadge.style.background = "rgba(16, 185, 129, 0.15)";
           }
         }
+      }
+    });
+  }
+
+  const patchProfileSelect = document.getElementById("patch-profile");
+  if (patchProfileSelect) {
+    patchProfileSelect.addEventListener("change", (e) => {
+      const selectedId = e.target.value;
+      const found = currentAppProfiles.find(p => p.id === selectedId);
+      applyProfileToUi(found || null);
+    });
+  }
+
+  const btnQuickManageProfile = document.getElementById("btn-quick-manage-profile");
+  if (btnQuickManageProfile) {
+    btnQuickManageProfile.addEventListener("click", () => {
+      switchTab("profiles");
+      if (uploadedApkData) {
+        openProfileModal({
+          name: `${uploadedApkData.app_name || 'App'} Morphe`,
+          package_name: uploadedApkData.package_name || "*",
+          branding: "custom",
+          custom_app_name: "{appName} Morphe",
+          output_format: "{appName}_{version}_{arch}_patched.apk",
+          optimize_arch: true,
+          target_arch: "arm64-v8a",
+          is_default: true,
+        });
       }
     });
   }
@@ -692,14 +724,9 @@ function showAppCard(data) {
     if (stockOpt) {
       stockOpt.textContent = `🔴 Original Stock (Keep "${data.app_name || 'Stock'}" & Stock Icon)`;
     }
-    brandingChoice.value = "original";
-  }
-  if (customAppName) {
-    customAppName.style.display = "none";
-    customAppName.value = "";
   }
 
-  updateSuggestedFilename(true);
+  loadAndSelectProfileForApp(data.package_name, data.app_name);
 
   appCard.style.display = "flex";
   optionsArea.style.display = "block";
@@ -1633,14 +1660,14 @@ async function fetchSystemStatus() {
     document.getElementById("watcher-status-text").textContent = w.enabled ? "Active & Monitoring" : "Disabled";
 
     const profileSelect = document.getElementById("patch-profile");
-    if (profileSelect && data.profiles) {
+    if (profileSelect && !uploadedApkData && data.profile_details) {
       const currentVal = profileSelect.value;
-      profileSelect.innerHTML = `<option value="">Recommended Defaults (Standard)</option>`;
-      data.profiles.forEach(p => {
+      profileSelect.innerHTML = `<option value="">Standard Defaults (No Profile)</option>`;
+      data.profile_details.forEach(p => {
         const opt = document.createElement("option");
-        opt.value = p;
-        opt.textContent = `📋 Preset: ${p}`;
-        if (p === currentVal) opt.selected = true;
+        opt.value = p.id;
+        opt.textContent = `${p.is_default ? '⭐' : '📋'} ${p.name}`;
+        if (p.id === currentVal) opt.selected = true;
         profileSelect.appendChild(opt);
       });
     }
@@ -1692,4 +1719,461 @@ function escapeHtml(str) {
     }[tag] || tag)
   );
 }
+
+// -------------------------------------------------------------
+// PROFILES & PRESETS SYSTEM
+// -------------------------------------------------------------
+
+let currentAppProfiles = [];
+let allProfilesCache = [];
+
+async function loadAndSelectProfileForApp(packageName, appName) {
+  const profileSelect = document.getElementById("patch-profile");
+  if (!profileSelect) return;
+
+  try {
+    const res = await fetch(`/api/profiles?package=${encodeURIComponent(packageName || '')}`);
+    if (!res.ok) throw new Error("Failed to fetch profiles");
+    currentAppProfiles = await res.json();
+
+    profileSelect.innerHTML = `<option value="">Standard Defaults (No Profile)</option>`;
+    
+    let defaultProfile = null;
+    currentAppProfiles.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = `${p.is_default ? '⭐' : '📋'} ${p.name} ${p.is_default ? '(Default)' : ''}`;
+      if (p.is_default && !defaultProfile) {
+        defaultProfile = p;
+        opt.selected = true;
+      }
+      profileSelect.appendChild(opt);
+    });
+
+    if (defaultProfile) {
+      profileSelect.value = defaultProfile.id;
+      applyProfileToUi(defaultProfile);
+    } else {
+      profileSelect.value = "";
+      applyProfileToUi(null);
+    }
+  } catch (e) {
+    console.error("Error loading profiles for app:", e);
+    profileSelect.innerHTML = `<option value="">Standard Defaults (No Profile)</option>`;
+    applyProfileToUi(null);
+  }
+}
+
+function applyProfileToUi(profile) {
+  const summaryBar = document.getElementById("profile-summary-bar");
+  const summaryText = document.getElementById("profile-summary-text");
+  const tagBadge = document.getElementById("profile-tag-badge");
+  const brandingChoice = document.getElementById("branding-choice");
+  const customAppName = document.getElementById("custom-app-name");
+  const outputNameInput = document.getElementById("output-name");
+  const optArchToggle = document.getElementById("optimize-arch-toggle");
+  const appName = uploadedApkData?.app_name || "App";
+  const ver = uploadedApkData?.version_name || "";
+
+  if (profile) {
+    if (summaryBar) summaryBar.style.display = "flex";
+    if (tagBadge) {
+      tagBadge.textContent = profile.is_default ? "⭐ Default" : "Custom Preset";
+      tagBadge.style.background = profile.is_default ? "rgba(99, 102, 241, 0.25)" : "var(--badge-bg)";
+      tagBadge.style.color = profile.is_default ? "#a5b4fc" : "var(--text-muted)";
+    }
+    if (summaryText) {
+      const brandDesc = profile.branding === "custom" 
+        ? `Branding: "${profile.custom_app_name || '{appName} Morphe'}"` 
+        : (profile.branding === "morphe" ? "Branding: Morphe" : "Branding: Stock");
+      const archDesc = profile.optimize_arch ? (profile.target_arch === "armeabi-v7a" ? "ARM32" : "ARM64") : "Universal";
+      summaryText.innerHTML = `✨ <strong>Active:</strong> ${escapeHtml(profile.name)} &bull; ${escapeHtml(brandDesc)} &bull; ${escapeHtml(archDesc)}`;
+    }
+
+    // Set branding
+    if (brandingChoice) {
+      brandingChoice.value = profile.branding || "original";
+      if (profile.branding === "custom") {
+        if (customAppName) {
+          customAppName.style.display = "block";
+          const rawTemplate = profile.custom_app_name || "{appName} Morphe";
+          customAppName.value = rawTemplate.replace(/\{appName\}|\{app_name\}|\{app\}/g, appName);
+        }
+      } else {
+        if (customAppName) customAppName.style.display = "none";
+      }
+    }
+
+    // Set arch
+    if (optArchToggle) {
+      optArchToggle.checked = profile.optimize_arch ?? true;
+      const archGroup = document.getElementById("arch-selector-group");
+      if (archGroup) {
+        archGroup.style.opacity = optArchToggle.checked ? "1" : "0.45";
+        archGroup.style.pointerEvents = optArchToggle.checked ? "auto" : "none";
+      }
+    }
+    const targetArch = profile.target_arch || "arm64-v8a";
+    const radio = document.querySelector(`input[name="target-arch"][value="${targetArch}"]`);
+    if (radio) radio.checked = true;
+
+    // Set output name
+    if (outputNameInput) {
+      let rawOut = profile.output_format || "{appName}_{version}_{arch}_patched.apk";
+      const cleanApp = appName.toLowerCase().replace(/[^a-z0-9]/g, "_");
+      const archTag = (profile.optimize_arch ?? true) ? (targetArch === "armeabi-v7a" ? "arm32" : "arm64") : "universal";
+      let resolved = rawOut
+        .replace(/\{appName\}|\{app_name\}|\{app\}/g, cleanApp)
+        .replace(/\{version\}|\{ver\}/g, ver)
+        .replace(/\{arch\}/g, archTag);
+      resolved = resolved.replace(/_+/g, "_").replace("._", ".").replace("_.", ".");
+      if (!resolved.toLowerCase().endsWith(".apk")) resolved += ".apk";
+      outputNameInput.value = resolved;
+    }
+
+  } else {
+    // Standard defaults
+    if (summaryBar) summaryBar.style.display = "flex";
+    if (tagBadge) {
+      tagBadge.textContent = "Stock Defaults";
+      tagBadge.style.background = "rgba(16, 185, 129, 0.15)";
+      tagBadge.style.color = "#34d399";
+    }
+    if (summaryText) {
+      summaryText.innerHTML = `✨ <strong>Active:</strong> Recommended Morphe Patches (Keep stock app name & icon)`;
+    }
+    if (brandingChoice) {
+      brandingChoice.value = "original";
+      if (customAppName) customAppName.style.display = "none";
+    }
+    updateSuggestedFilename(true);
+  }
+}
+
+function setupProfiles() {
+  const btnCreate = document.getElementById("btn-create-profile");
+  const btnClose = document.getElementById("btn-close-profile-modal");
+  const btnCancel = document.getElementById("btn-cancel-profile");
+  const form = document.getElementById("profile-form");
+  const searchInput = document.getElementById("profile-search-input");
+  const packageSelect = document.getElementById("modal-package-select");
+  const customPackageInput = document.getElementById("modal-custom-package");
+  const brandingSelect = document.getElementById("modal-branding-select");
+  const customNameWrap = document.getElementById("modal-custom-name-wrap");
+
+  if (btnCreate) {
+    btnCreate.addEventListener("click", () => openProfileModal());
+  }
+  if (btnClose) {
+    btnClose.addEventListener("click", closeProfileModal);
+  }
+  if (btnCancel) {
+    btnCancel.addEventListener("click", closeProfileModal);
+  }
+
+  if (packageSelect) {
+    packageSelect.addEventListener("change", () => {
+      if (packageSelect.value === "custom") {
+        customPackageInput.style.display = "block";
+        customPackageInput.focus();
+      } else {
+        customPackageInput.style.display = "none";
+      }
+    });
+  }
+
+  if (brandingSelect) {
+    brandingSelect.addEventListener("change", () => {
+      if (brandingSelect.value === "custom") {
+        customNameWrap.style.display = "block";
+      } else {
+        customNameWrap.style.display = "none";
+      }
+    });
+  }
+
+  document.querySelectorAll(".tag-pill").forEach(pill => {
+    pill.addEventListener("click", (e) => {
+      const tag = e.target.dataset.tag;
+      const input = document.getElementById("modal-output-format");
+      if (tag && input) {
+        input.value = `${input.value}${tag}`;
+      }
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      renderProfilesGrid(searchInput.value.trim().toLowerCase());
+    });
+  }
+
+  if (form) {
+    form.addEventListener("submit", handleProfileFormSubmit);
+  }
+}
+
+async function loadProfilesList() {
+  try {
+    const res = await fetch("/api/profiles");
+    if (!res.ok) throw new Error("Failed to load profiles");
+    allProfilesCache = await res.json();
+    renderProfilesGrid();
+  } catch (e) {
+    console.error("Error fetching profiles:", e);
+  }
+}
+
+function renderProfilesGrid(filter = "") {
+  const container = document.getElementById("profiles-grid");
+  const countBadge = document.getElementById("profiles-count-badge");
+  if (!container) return;
+
+  let profiles = allProfilesCache;
+  if (filter) {
+    profiles = profiles.filter(p => 
+      p.name.toLowerCase().includes(filter) || 
+      p.package_name.toLowerCase().includes(filter) ||
+      (p.description && p.description.toLowerCase().includes(filter))
+    );
+  }
+
+  if (countBadge) {
+    countBadge.textContent = `${profiles.length} Preset${profiles.length === 1 ? '' : 's'}`;
+  }
+
+  if (profiles.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1.5rem; background: var(--bg-card); border: 1px dashed var(--border); border-radius: 12px; color: var(--text-muted);">
+        <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">📋</div>
+        <div style="font-weight: 600; font-size: 1.05rem; color: var(--text-main);">No Presets Found</div>
+        <div style="font-size: 0.85rem; margin-top: 0.25rem;">Create a preset to configure custom naming, architecture, and output formats.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const packageIcons = {
+    "com.google.android.youtube": "📺",
+    "com.google.android.apps.youtube.music": "🎵",
+    "com.reddit.frontpage": "🤖",
+    "com.twitter.android": "🐦",
+    "com.spotify.music": "🎧",
+    "*": "🌐",
+  };
+
+  container.innerHTML = profiles.map(p => {
+    const icon = packageIcons[p.package_name] || "📱";
+    const isDefault = p.is_default;
+    const defaultBadge = isDefault ? `<span class="badge" style="background: rgba(99, 102, 241, 0.25); color: #818cf8; font-weight: 700;">⭐ Default</span>` : "";
+    const brandLabel = p.branding === "custom" 
+      ? `✏️ "${p.custom_app_name || '{appName} Morphe'}"` 
+      : (p.branding === "morphe" ? "🟣 Morphe" : "🔴 Original Stock");
+    const archLabel = p.optimize_arch ? (p.target_arch === "armeabi-v7a" ? "ARM32" : "ARM64") : "Universal";
+
+    return `
+      <div class="profile-card ${isDefault ? 'is-default' : ''}">
+        <div>
+          <div class="profile-card-header">
+            <div>
+              <div class="profile-card-title">
+                <span>${icon}</span>
+                <span>${escapeHtml(p.name)}</span>
+              </div>
+              <div class="profile-card-pkg">${escapeHtml(p.package_name === "*" ? "Universal (Any App)" : p.package_name)}</div>
+            </div>
+            ${defaultBadge}
+          </div>
+
+          <div style="font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.5rem;">
+            ${escapeHtml(p.description || "Preset with customized naming and patching settings.")}
+          </div>
+
+          <div class="profile-details-list">
+            <div class="profile-detail-row">
+              <span class="profile-detail-label">Branding:</span>
+              <span class="profile-detail-val" title="${escapeHtml(brandLabel)}">${escapeHtml(brandLabel)}</span>
+            </div>
+            <div class="profile-detail-row">
+              <span class="profile-detail-label">Output Filename:</span>
+              <span class="profile-detail-val" title="${escapeHtml(p.output_format || '')}">${escapeHtml(p.output_format || 'default')}</span>
+            </div>
+            <div class="profile-detail-row">
+              <span class="profile-detail-label">Architecture:</span>
+              <span class="profile-detail-val">${archLabel}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="profile-card-actions">
+          ${!isDefault ? `<button type="button" class="btn btn-secondary btn-action-default" data-id="${escapeHtml(p.id)}" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;">⭐ Make Default</button>` : ''}
+          <button type="button" class="btn btn-secondary btn-action-edit" data-id="${escapeHtml(p.id)}" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;">✏️ Edit</button>
+          <button type="button" class="btn btn-danger btn-action-delete" data-id="${escapeHtml(p.id)}" style="padding: 0.35rem 0.65rem; font-size: 0.78rem;">🗑️ Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  // Attach event handlers
+  container.querySelectorAll(".btn-action-default").forEach(b => {
+    b.addEventListener("click", () => handleSetDefaultProfile(b.dataset.id));
+  });
+  container.querySelectorAll(".btn-action-edit").forEach(b => {
+    b.addEventListener("click", () => handleEditProfile(b.dataset.id));
+  });
+  container.querySelectorAll(".btn-action-delete").forEach(b => {
+    b.addEventListener("click", () => handleDeleteProfile(b.dataset.id));
+  });
+}
+
+function openProfileModal(data = null) {
+  const modal = document.getElementById("profile-editor-modal");
+  const heading = document.getElementById("modal-profile-heading");
+  const idInput = document.getElementById("modal-profile-id");
+  const nameInput = document.getElementById("modal-profile-name");
+  const packageSelect = document.getElementById("modal-package-select");
+  const customPackageInput = document.getElementById("modal-custom-package");
+  const brandingSelect = document.getElementById("modal-branding-select");
+  const customNameInput = document.getElementById("modal-custom-name");
+  const customNameWrap = document.getElementById("modal-custom-name-wrap");
+  const outputFormatInput = document.getElementById("modal-output-format");
+  const isDefaultCheckbox = document.getElementById("modal-is-default");
+
+  if (!modal) return;
+
+  if (data) {
+    heading.textContent = data.id ? "Edit Preset Profile" : "Create Preset Profile";
+    idInput.value = data.id || "";
+    nameInput.value = data.name || "";
+
+    const pkg = data.package_name || "*";
+    const foundOpt = Array.from(packageSelect.options).find(o => o.value === pkg);
+    if (foundOpt) {
+      packageSelect.value = pkg;
+      customPackageInput.style.display = "none";
+      customPackageInput.value = "";
+    } else {
+      packageSelect.value = "custom";
+      customPackageInput.style.display = "block";
+      customPackageInput.value = pkg;
+    }
+
+    brandingSelect.value = data.branding || "custom";
+    customNameWrap.style.display = brandingSelect.value === "custom" ? "block" : "none";
+    customNameInput.value = data.custom_app_name || "{appName} Morphe";
+
+    outputFormatInput.value = data.output_format || "{appName}_{version}_{arch}_patched.apk";
+    
+    const arch = data.target_arch || "arm64-v8a";
+    const radio = document.querySelector(`input[name="modal-arch"][value="${arch}"]`);
+    if (radio) radio.checked = true;
+
+    isDefaultCheckbox.checked = !!data.is_default;
+  } else {
+    heading.textContent = "Create Preset Profile";
+    idInput.value = "";
+    nameInput.value = "";
+    packageSelect.value = "com.google.android.youtube";
+    customPackageInput.style.display = "none";
+    customPackageInput.value = "";
+    brandingSelect.value = "custom";
+    customNameWrap.style.display = "block";
+    customNameInput.value = "{appName} Morphe";
+    outputFormatInput.value = "{appName}_{version}_{arch}_patched.apk";
+    const radio = document.querySelector('input[name="modal-arch"][value="arm64-v8a"]');
+    if (radio) radio.checked = true;
+    isDefaultCheckbox.checked = true;
+  }
+
+  modal.classList.add("active");
+}
+
+function closeProfileModal() {
+  const modal = document.getElementById("profile-editor-modal");
+  if (modal) modal.classList.remove("active");
+}
+
+async function handleProfileFormSubmit(e) {
+  e.preventDefault();
+  const idInput = document.getElementById("modal-profile-id");
+  const nameInput = document.getElementById("modal-profile-name");
+  const packageSelect = document.getElementById("modal-package-select");
+  const customPackageInput = document.getElementById("modal-custom-package");
+  const brandingSelect = document.getElementById("modal-branding-select");
+  const customNameInput = document.getElementById("modal-custom-name");
+  const outputFormatInput = document.getElementById("modal-output-format");
+  const isDefaultCheckbox = document.getElementById("modal-is-default");
+  const selectedArch = document.querySelector('input[name="modal-arch"]:checked')?.value || "arm64-v8a";
+
+  let pkg = packageSelect.value;
+  if (pkg === "custom") {
+    pkg = customPackageInput.value.trim() || "*";
+  }
+
+  const payload = {
+    id: idInput.value || undefined,
+    name: nameInput.value.trim(),
+    package_name: pkg,
+    branding: brandingSelect.value,
+    custom_app_name: customNameInput.value.trim() || "{appName} Morphe",
+    output_format: outputFormatInput.value.trim() || "{appName}_{version}_{arch}_patched.apk",
+    optimize_arch: selectedArch !== "universal",
+    target_arch: selectedArch,
+    is_default: isDefaultCheckbox.checked,
+  };
+
+  try {
+    const res = await fetch("/api/profiles", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.detail || "Failed to save profile");
+    }
+    closeProfileModal();
+    await loadProfilesList();
+    if (uploadedApkData) {
+      await loadAndSelectProfileForApp(uploadedApkData.package_name, uploadedApkData.app_name);
+    }
+  } catch (err) {
+    alert("Error saving profile: " + err.message);
+  }
+}
+
+async function handleSetDefaultProfile(profileId) {
+  try {
+    const res = await fetch(`/api/profiles/${encodeURIComponent(profileId)}/set-default`, { method: "POST" });
+    if (!res.ok) throw new Error("Failed to set default profile");
+    await loadProfilesList();
+    if (uploadedApkData) {
+      await loadAndSelectProfileForApp(uploadedApkData.package_name, uploadedApkData.app_name);
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
+async function handleEditProfile(profileId) {
+  const prof = allProfilesCache.find(p => p.id === profileId);
+  if (prof) {
+    openProfileModal(prof);
+  }
+}
+
+async function handleDeleteProfile(profileId) {
+  if (!confirm(`Are you sure you want to delete profile "${profileId}"?`)) return;
+  try {
+    const res = await fetch(`/api/profiles/${encodeURIComponent(profileId)}`, { method: "DELETE" });
+    if (!res.ok) throw new Error("Failed to delete profile");
+    await loadProfilesList();
+    if (uploadedApkData) {
+      await loadAndSelectProfileForApp(uploadedApkData.package_name, uploadedApkData.app_name);
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+}
+
 

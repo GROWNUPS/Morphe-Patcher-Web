@@ -73,6 +73,10 @@
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
       Hot Folder Watcher
     </button>
+    <button class="tab-btn" data-tab="profiles">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+      Profiles
+    </button>
     <button class="tab-btn" data-tab="system">
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
       Settings & Keystore
@@ -180,76 +184,104 @@
 
         <!-- Patch Options Form -->
         <div id="patch-options-area" style="display: none; margin-top: 1.5rem;">
-          <div class="controls-grid">
-            <!-- 1. App Name & Branding -->
-            <div class="form-group">
-              <label for="branding-choice">App Name & Branding</label>
-              <select id="branding-choice" class="form-control">
-                <option value="original" selected>🔴 Original Stock (Stock Name & Stock Icon)</option>
-                <option value="morphe">🟣 Morphe Custom (Name: "Morphe" & Custom Icon)</option>
-                <option value="custom">✏️ Custom App Name...</option>
-              </select>
-              <input type="text" id="custom-app-name" class="form-control" placeholder="Enter custom app name (e.g. YouTube Pro)" style="display: none; margin-top: 0.5rem;">
-            </div>
-
-            <!-- 2. Output APK Filename -->
-            <div class="form-group">
-              <label for="output-name">Output APK Filename</label>
-              <input type="text" id="output-name" class="form-control" placeholder="app-morphe-patched.apk">
-            </div>
-
-            <!-- 3. Optimize for device architecture Toggle & Selector -->
-            <div class="form-group" style="grid-column: 1 / -1;">
-              <div style="background: #030712; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
-                  <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--text-main); margin-bottom: 0;">
-                    <input type="checkbox" id="optimize-arch-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
-                    <span>⚡ Optimize for device architecture</span>
-                  </label>
-                  <span class="badge" style="background: #065f46; color: #34d399; font-weight: 600;">Cuts file size by ~50% (~90 MB saved)</span>
-                </div>
-                <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.85rem;">
-                  Strips unused native architecture binaries (x86/x86_64) from universal APKs. Modern smartphones (2016+) run ARM64.
-                </div>
-                <div id="arch-selector-group" style="display: flex; gap: 2rem; align-items: center; padding: 0.5rem 0.75rem; background: #0b0f17; border-radius: 8px; border: 1px solid var(--border);">
-                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
-                    <input type="radio" name="target-arch" value="arm64-v8a" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
-                    <span><strong>arm64</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(arm64-v8a — Default / Modern 64-bit phones)</span></span>
-                  </label>
-                  <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
-                    <input type="radio" name="target-arch" value="armeabi-v7a" style="accent-color: var(--primary); width: 16px; height: 16px;">
-                    <span><strong>arm32</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(armeabi-v7a — Older 32-bit devices / TV)</span></span>
-                  </label>
-                </div>
+          <!-- Primary Preset Card -->
+          <div class="preset-selection-card" style="background: #030712; border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem; flex-wrap: wrap; gap: 0.5rem;">
+              <label for="patch-profile" style="font-weight: 700; font-size: 0.95rem; margin-bottom: 0; display: flex; align-items: center; gap: 0.4rem;">
+                <span>📋</span>
+                <span>Patch Preset / Profile</span>
+              </label>
+              <div style="display: flex; gap: 0.5rem; align-items: center;">
+                <button type="button" id="btn-quick-manage-profile" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; display: flex; align-items: center; gap: 0.35rem;" title="Manage existing or configure new profile for this app">
+                  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  <span>New / Manage Presets</span>
+                </button>
               </div>
             </div>
 
-            <!-- Patch Source / Bundle Selector -->
-            <div class="form-group">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                <label for="patch-source-select" style="margin-bottom: 0;">Patch Source / Bundle</label>
-                <span id="patch-source-badge" class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.75rem;">Official</span>
-              </div>
-              <select id="patch-source-select" class="form-control">
-                <option value="default" selected>🌟 Official Morphe Patches (Default)</option>
-                <option value="custom_url">🌐 Custom Remote URL / GitHub Repository...</option>
-              </select>
-              <div id="custom-patches-url-wrap" style="display: none; margin-top: 0.5rem;">
-                <input type="text" id="custom-patches-url-input" class="form-control" placeholder="e.g. https://github.com/Inotia00/revanced-patches or https://.../patches.mpp">
-                <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
-                  Accepts direct .mpp download URLs or community GitHub repos.
-                </div>
-              </div>
-            </div>
+            <select id="patch-profile" class="form-control" style="font-size: 0.95rem; font-weight: 500; padding: 0.65rem 0.85rem;">
+              <option value="">Standard Defaults (No Profile)</option>
+            </select>
 
-            <!-- Profile Selector (Optional) -->
-            <div class="form-group">
-              <label for="patch-profile">Patch Preset / Profile (Optional)</label>
-              <select id="patch-profile" class="form-control">
-                <option value="">Recommended Defaults (Standard)</option>
-              </select>
+            <div id="profile-summary-bar" style="margin-top: 0.65rem; padding: 0.5rem 0.75rem; background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 8px; font-size: 0.82rem; color: #a5b4fc; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem;">
+              <div id="profile-summary-text">✨ <strong>Preset Active:</strong> Morphe Recommended defaults</div>
+              <span id="profile-tag-badge" class="badge" style="background: rgba(99, 102, 241, 0.2); color: #c7d2fe; font-size: 0.75rem;">Default</span>
             </div>
           </div>
+
+          <!-- Collapsible Advanced Options & Overrides -->
+          <details id="advanced-options-details" class="advanced-details-box" style="margin-bottom: 1.5rem; background: rgba(17, 24, 39, 0.4); border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 1.15rem;">
+            <summary style="cursor: pointer; font-weight: 600; color: var(--text-muted); user-select: none; display: flex; align-items: center; justify-content: space-between;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span>⚙️ Advanced Options & Overrides</span>
+                <span style="font-size: 0.78rem; color: var(--text-muted); font-weight: normal;">(App Branding, Filename, Architecture)</span>
+              </div>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Click to toggle</span>
+            </summary>
+
+            <div class="controls-grid" style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+              <!-- 1. App Name & Branding Override -->
+              <div class="form-group">
+                <label for="branding-choice">App Name & Branding Override</label>
+                <select id="branding-choice" class="form-control">
+                  <option value="original">🔴 Original Stock (Stock Name & Stock Icon)</option>
+                  <option value="morphe">🟣 Morphe Custom (Name: "Morphe" & Custom Icon)</option>
+                  <option value="custom">✏️ Custom App Name...</option>
+                </select>
+                <input type="text" id="custom-app-name" class="form-control" placeholder="e.g. {appName} Morphe" style="display: none; margin-top: 0.5rem;">
+              </div>
+
+              <!-- 2. Output APK Filename Override -->
+              <div class="form-group">
+                <label for="output-name">Output APK Filename Override</label>
+                <input type="text" id="output-name" class="form-control" placeholder="app-morphe-patched.apk">
+              </div>
+
+              <!-- 3. Optimize for device architecture Toggle & Selector -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <div style="background: #030712; border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem 1.25rem;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                    <label style="display: flex; align-items: center; gap: 0.6rem; font-weight: 600; cursor: pointer; color: var(--text-main); margin-bottom: 0;">
+                      <input type="checkbox" id="optimize-arch-toggle" checked style="width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer;">
+                      <span>⚡ Optimize for device architecture</span>
+                    </label>
+                    <span class="badge" style="background: #065f46; color: #34d399; font-weight: 600;">Cuts file size by ~50% (~90 MB saved)</span>
+                  </div>
+                  <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.85rem;">
+                    Strips unused native architecture binaries (x86/x86_64) from universal APKs. Modern smartphones (2016+) run ARM64.
+                  </div>
+                  <div id="arch-selector-group" style="display: flex; gap: 2rem; align-items: center; padding: 0.5rem 0.75rem; background: #0b0f17; border-radius: 8px; border: 1px solid var(--border);">
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                      <input type="radio" name="target-arch" value="arm64-v8a" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                      <span><strong>arm64</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(arm64-v8a — Default / Modern 64-bit phones)</span></span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; cursor: pointer;">
+                      <input type="radio" name="target-arch" value="armeabi-v7a" style="accent-color: var(--primary); width: 16px; height: 16px;">
+                      <span><strong>arm32</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(armeabi-v7a — Older 32-bit devices / TV)</span></span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Patch Source / Bundle Selector -->
+              <div class="form-group" style="grid-column: 1 / -1;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                  <label for="patch-source-select" style="margin-bottom: 0;">Patch Source / Bundle</label>
+                  <span id="patch-source-badge" class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-size: 0.75rem;">Official</span>
+                </div>
+                <select id="patch-source-select" class="form-control">
+                  <option value="default" selected>🌟 Official Morphe Patches (Default)</option>
+                  <option value="custom_url">🌐 Custom Remote URL / GitHub Repository...</option>
+                </select>
+                <div id="custom-patches-url-wrap" style="display: none; margin-top: 0.5rem;">
+                  <input type="text" id="custom-patches-url-input" class="form-control" placeholder="e.g. https://github.com/Inotia00/revanced-patches or https://.../patches.mpp">
+                  <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
+                    Accepts direct .mpp download URLs or community GitHub repos.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
 
           <button id="btn-start-patch" class="btn btn-block">
             <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -444,6 +476,38 @@
       </div>
     </section>
 
+    <!-- Tab: Profiles & Presets -->
+    <section id="tab-profiles" class="tab-content">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;">
+          <div>
+            <h2 class="card-title" style="margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📋</span>
+              <span>Patch Profiles & Presets</span>
+            </h2>
+            <p class="card-desc" style="margin-bottom: 0;">Configure customized presets per app or globally. Presets automatically apply during Web uploads and Hot-Folder (<code>./watch</code>) monitoring.</p>
+          </div>
+          <button id="btn-create-profile" class="btn btn-primary" type="button" style="display: flex; align-items: center; gap: 0.5rem;">
+            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            <span>Create New Profile</span>
+          </button>
+        </div>
+
+        <!-- Filter / Search Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 420px;">
+            <input type="text" id="profile-search-input" class="form-control" placeholder="Search profiles by name or package...">
+          </div>
+          <span id="profiles-count-badge" class="badge" style="font-size: 0.8rem; background: var(--badge-bg); color: var(--text-muted);">0 Presets</span>
+        </div>
+
+        <!-- Profiles List Grid -->
+        <div id="profiles-grid" class="profiles-grid-container">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+    </section>
+
     <!-- Tab 5: Settings & Keystore -->
     <section id="tab-system" class="tab-content">
       <!-- 1. Keystore Management Card -->
@@ -567,7 +631,104 @@
           </div>
         </div>
       </div>
+    </section>
   </main>
+
+  <!-- Profile Editor Modal -->
+  <div id="profile-editor-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 600px; text-align: left; padding: 1.75rem;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 id="modal-profile-heading" class="modal-title" style="margin-bottom: 0;">Create Preset Profile</h3>
+        <button id="btn-close-profile-modal" type="button" class="btn btn-secondary" style="padding: 0.3rem 0.6rem; font-size: 0.9rem;">✕</button>
+      </div>
+
+      <form id="profile-form">
+        <input type="hidden" id="modal-profile-id" value="">
+
+        <!-- Profile Name -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modal-profile-name" style="font-weight: 600; font-size: 0.85rem;">Profile Display Name</label>
+          <input type="text" id="modal-profile-name" class="form-control" placeholder="e.g. YouTube Morphe" required>
+        </div>
+
+        <!-- Target App / Package -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modal-package-select" style="font-weight: 600; font-size: 0.85rem;">Target Application / Package</label>
+          <select id="modal-package-select" class="form-control" style="margin-bottom: 0.4rem;">
+            <option value="com.google.android.youtube">📺 YouTube (com.google.android.youtube)</option>
+            <option value="com.google.android.apps.youtube.music">🎵 YouTube Music (com.google.android.apps.youtube.music)</option>
+            <option value="com.reddit.frontpage">🤖 Reddit (com.reddit.frontpage)</option>
+            <option value="com.twitter.android">🐦 Twitter / X (com.twitter.android)</option>
+            <option value="com.spotify.music">🎧 Spotify (com.spotify.music)</option>
+            <option value="*">🌐 Universal (Applies to all applications)</option>
+            <option value="custom">✏️ Custom Package ID...</option>
+          </select>
+          <input type="text" id="modal-custom-package" class="form-control" placeholder="Enter Android package name (e.g. com.duolingo)" style="display: none;">
+        </div>
+
+        <!-- App Branding & Naming Template -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modal-branding-select" style="font-weight: 600; font-size: 0.85rem;">App Name & Branding Rule</label>
+          <select id="modal-branding-select" class="form-control">
+            <option value="custom">✏️ Custom Name Template (e.g. "{appName} Morphe")</option>
+            <option value="original">🔴 Original Stock (Keep Stock Name & Icon)</option>
+            <option value="morphe">🟣 Morphe Custom (Name: "Morphe" & Custom Icon)</option>
+          </select>
+          <div id="modal-custom-name-wrap" style="margin-top: 0.5rem;">
+            <input type="text" id="modal-custom-name" class="form-control" placeholder="{appName} Morphe" value="{appName} Morphe">
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
+              💡 <code>{appName}</code> dynamically inserts the detected app name (e.g. YouTube &rarr; <em>YouTube Morphe</em>).
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Filename Pattern -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modal-output-format" style="font-weight: 600; font-size: 0.85rem;">Output Filename Template</label>
+          <input type="text" id="modal-output-format" class="form-control" placeholder="{appName}_{version}_{arch}_patched.apk" value="{appName}_{version}_{arch}_patched.apk">
+          <div style="display: flex; gap: 0.35rem; margin-top: 0.35rem; align-items: center; flex-wrap: wrap;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Insert tag:</span>
+            <button type="button" class="btn btn-secondary tag-pill" data-tag="{appName}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{appName}</button>
+            <button type="button" class="btn btn-secondary tag-pill" data-tag="{version}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{version}</button>
+            <button type="button" class="btn btn-secondary tag-pill" data-tag="{arch}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{arch}</button>
+          </div>
+        </div>
+
+        <!-- Target Architecture -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label style="font-weight: 600; font-size: 0.85rem; display: block; margin-bottom: 0.35rem;">Target Architecture</label>
+          <div style="display: flex; gap: 1.25rem;">
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; cursor: pointer;">
+              <input type="radio" name="modal-arch" value="arm64-v8a" checked style="accent-color: var(--primary);">
+              <span>ARM64 (64-bit phones)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; cursor: pointer;">
+              <input type="radio" name="modal-arch" value="armeabi-v7a" style="accent-color: var(--primary);">
+              <span>ARM32 (32-bit legacy)</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.4rem; font-size: 0.88rem; cursor: pointer;">
+              <input type="radio" name="modal-arch" value="universal" style="accent-color: var(--primary);">
+              <span>Universal</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Default Checkbox -->
+        <div class="form-group" style="margin-bottom: 1.5rem; background: #030712; padding: 0.75rem 1rem; border-radius: 8px; border: 1px solid var(--border);">
+          <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; margin-bottom: 0; font-size: 0.88rem;">
+            <input type="checkbox" id="modal-is-default" style="width: 17px; height: 17px; accent-color: var(--primary); cursor: pointer;">
+            <span>⭐ <strong>Set as Default Profile</strong> for this app (Auto-selected on upload & hot folder)</span>
+          </label>
+        </div>
+
+        <!-- Actions -->
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+          <button type="button" id="btn-cancel-profile" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="btn-save-profile" class="btn btn-primary">Save Profile</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Legal & Trademark Disclaimer Footer -->
   <footer style="margin: 3.5rem auto 2rem auto; text-align: center; max-width: 850px; padding: 0 1.25rem; color: var(--text-muted); font-size: 0.72rem; line-height: 1.6; opacity: 0.65;">

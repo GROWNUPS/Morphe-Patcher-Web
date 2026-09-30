@@ -17,19 +17,14 @@ from app.core.downloader import download_file
 
 router = APIRouter(prefix="/api/system", tags=["System"])
 
-class ProfilePayload(BaseModel):
-    name: str
-    content: dict
+from app.core.profiles import list_profiles
 
 @router.get("/status")
 async def get_system_status():
     jar_path = Path(MORPHE_JAR)
     patches_path = Path(PATCHES_FILE)
 
-    profiles = []
-    if PROFILES_DIR.exists():
-        for p in PROFILES_DIR.glob("*.json"):
-            profiles.append(p.stem)
+    profiles = list_profiles()
 
     return {
         "morphe_jar": {
@@ -49,7 +44,8 @@ async def get_system_status():
             "queued_count": queue_manager.queue.qsize(),
             "total_jobs": len(queue_manager.jobs),
         },
-        "profiles": profiles,
+        "profiles": [p["id"] for p in profiles],
+        "profile_details": profiles,
     }
 
 @router.post("/update-patches")
@@ -60,26 +56,4 @@ async def update_patches_bundle():
         raise HTTPException(status_code=500, detail="Failed to update patches bundle from GitHub.")
     return {"success": True, "message": "Patches bundle updated successfully."}
 
-@router.get("/profiles/{name}")
-async def get_profile(name: str):
-    safe_name = Path(name).name
-    file_path = PROFILES_DIR / f"{safe_name}.json"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="Profile not found")
-    try:
-        with open(file_path, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.post("/profiles")
-async def save_profile(payload: ProfilePayload):
-    safe_name = Path(payload.name.strip().replace(" ", "_")).name
-    file_path = PROFILES_DIR / f"{safe_name}.json"
-    try:
-        with open(file_path, "w") as f:
-            json.dump(payload.content, f, indent=2)
-        return {"success": True, "profile": safe_name}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
