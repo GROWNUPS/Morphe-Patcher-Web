@@ -1,3 +1,4 @@
+# Patchium - Docker Build Ignore Rules
 .git
 .gitignore
 .env

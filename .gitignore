@@ -1,3 +1,4 @@
+# Patchium - Git Ignore Rules
 # Python
 __pycache__/
 *.py[cod]
