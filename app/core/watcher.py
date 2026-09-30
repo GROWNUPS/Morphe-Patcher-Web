@@ -124,30 +124,49 @@ class HotFolderWatcher:
                 clean_app = app_name.lower().replace(" ", "_")
                 out_filename = f"{clean_app}_{ver}_morphe_patched.apk"
 
-            branding = profile.get("branding", "custom") if profile else "custom"
+            app_name_mode = (profile.get("app_name_mode") or profile.get("branding") or "custom") if profile else "custom"
             custom_app_name = profile.get("custom_app_name", "{appName} Morphe") if profile else "{appName} Morphe"
+            app_icon = profile.get("app_icon", "original") if profile else "original"
 
             excludes = list(profile.get("exclude_patches", [])) if profile else []
             includes = list(profile.get("include_patches", [])) if profile else []
             patch_options = None
 
-            if branding == "original":
-                if "Custom branding" not in excludes:
-                    excludes.append("Custom branding")
+            # If App Icon is Original Stock, disable Change Header patch to keep stock header
+            if app_icon == "original":
                 if "Change header" not in excludes:
                     excludes.append("Change header")
-            elif branding == "custom" and custom_app_name:
-                resolved_app_name = resolve_naming_template(
-                    custom_app_name,
-                    app_name=app_name,
-                    version=ver,
-                    arch=strip_libs,
-                )
-                patch_options = {
-                    "Custom branding": {
-                        "customName": resolved_app_name
+
+            # If both App Name and App Icon are set to Original, disable Custom branding entirely
+            if app_name_mode == "original" and app_icon == "original":
+                if "Custom branding" not in excludes:
+                    excludes.append("Custom branding")
+            else:
+                branding_opts = {}
+                if app_name_mode == "custom" and custom_app_name:
+                    branding_opts["customName"] = resolve_naming_template(
+                        custom_app_name,
+                        app_name=app_name,
+                        version=ver,
+                        arch=strip_libs,
+                    )
+                if app_icon:
+                    branding_opts["appIcon"] = app_icon
+
+                if branding_opts:
+                    patch_options = {
+                        "Custom branding": branding_opts
                     }
-                }
+
+            if profile and profile.get("patch_options"):
+                merged_opts = dict(profile.get("patch_options"))
+                if patch_options:
+                    for k, v in patch_options.items():
+                        if k in merged_opts and isinstance(merged_opts[k], dict):
+                            merged_opts[k].update(v)
+                        else:
+                            merged_opts[k] = v
+                patch_options = merged_opts
 
             job = Job(
                 input_path=file_path,

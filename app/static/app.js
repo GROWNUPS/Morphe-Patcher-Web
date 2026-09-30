@@ -327,6 +327,13 @@ function setupUpload() {
     });
   }
 
+  const appIconChoice = document.getElementById("app-icon-choice");
+  if (appIconChoice) {
+    appIconChoice.addEventListener("change", () => {
+      updateSuggestedFilename();
+    });
+  }
+
   if (customAppName) {
     customAppName.addEventListener("input", () => {
       updateSuggestedFilename();
@@ -400,8 +407,10 @@ function setupUpload() {
         openProfileModal({
           name: `${uploadedApkData.app_name || 'App'} Morphe`,
           package_name: uploadedApkData.package_name || "*",
+          app_name_mode: "custom",
           branding: "custom",
           custom_app_name: "{appName} Morphe",
+          app_icon: "original",
           output_format: "{appName}_{version}_{arch}_patched.apk",
           optimize_arch: true,
           target_arch: "arm64-v8a",
@@ -619,7 +628,9 @@ function createStagedApk(data) {
     icon_base64: data.icon_base64,
     compatibility: data.compatibility,
     branding: "original",
+    app_name_mode: "original",
     custom_app_name: "",
+    app_icon: "original",
     optimize_arch: true,
     target_arch: defaultArch,
     output_filename: defaultFilename,
@@ -722,7 +733,7 @@ function showAppCard(data) {
   if (brandingChoice) {
     const stockOpt = brandingChoice.querySelector('option[value="original"]');
     if (stockOpt) {
-      stockOpt.textContent = `🔴 Original Stock (Keep "${data.app_name || 'Stock'}" & Stock Icon)`;
+      stockOpt.textContent = `🔴 Original Stock Name (Keep "${data.app_name || 'Stock'}")`;
     }
   }
 
@@ -977,8 +988,9 @@ async function startPatchJob() {
 
   const outputName = document.getElementById("output-name").value.trim() || undefined;
   const profileName = document.getElementById("patch-profile").value || undefined;
-  const branding = document.getElementById("branding-choice")?.value || "original";
+  const appNameMode = document.getElementById("branding-choice")?.value || "custom";
   const customAppNameVal = document.getElementById("custom-app-name")?.value.trim() || undefined;
+  const appIconVal = document.getElementById("app-icon-choice")?.value || "original";
   const optimizeArch = document.getElementById("optimize-arch-toggle")?.checked ?? true;
   const selectedArch = document.querySelector('input[name="target-arch"]:checked')?.value || "arm64-v8a";
   const stripLibs = optimizeArch ? selectedArch : undefined;
@@ -991,8 +1003,10 @@ async function startPatchJob() {
     package_name: uploadedApkData.package_name,
     version_name: uploadedApkData.version_name,
     profile_name: profileName,
-    branding: branding,
+    app_name_mode: appNameMode,
+    branding: appNameMode,
     custom_app_name: customAppNameVal,
+    app_icon: appIconVal,
     strip_libs: stripLibs,
     patch_source: patchSource,
     custom_patches_url: customPatchesUrl,
@@ -1040,8 +1054,10 @@ async function startBatchPatchJobs() {
       package_name: apk.package_name,
       version_name: apk.version_name,
       strip_libs: stripLibs,
-      branding: apk.branding,
+      app_name_mode: apk.app_name_mode || apk.branding || "custom",
+      branding: apk.app_name_mode || apk.branding || "custom",
       custom_app_name: apk.custom_app_name || undefined,
+      app_icon: apk.app_icon || "original",
       patch_source: apk.patch_source || "default",
     };
   });
@@ -1770,10 +1786,20 @@ function applyProfileToUi(profile) {
   const tagBadge = document.getElementById("profile-tag-badge");
   const brandingChoice = document.getElementById("branding-choice");
   const customAppName = document.getElementById("custom-app-name");
+  const appIconChoice = document.getElementById("app-icon-choice");
   const outputNameInput = document.getElementById("output-name");
   const optArchToggle = document.getElementById("optimize-arch-toggle");
   const appName = uploadedApkData?.app_name || "App";
   const ver = uploadedApkData?.version_name || "";
+
+  const iconLabels = {
+    "original": "Original Stock Icon",
+    "black": "Morphe Black",
+    "dark": "Morphe Dark",
+    "light": "Morphe Light",
+    "play": "Morphe Play (Red)",
+    "play_black": "Morphe Play Black",
+  };
 
   if (profile) {
     if (summaryBar) summaryBar.style.display = "flex";
@@ -1782,18 +1808,23 @@ function applyProfileToUi(profile) {
       tagBadge.style.background = profile.is_default ? "rgba(99, 102, 241, 0.25)" : "var(--badge-bg)";
       tagBadge.style.color = profile.is_default ? "#a5b4fc" : "var(--text-muted)";
     }
+
+    const appNameMode = profile.app_name_mode || profile.branding || "custom";
+    const appIcon = profile.app_icon || "original";
+
     if (summaryText) {
-      const brandDesc = profile.branding === "custom" 
-        ? `Branding: "${profile.custom_app_name || '{appName} Morphe'}"` 
-        : (profile.branding === "morphe" ? "Branding: Morphe" : "Branding: Stock");
+      const nameDesc = appNameMode === "custom" 
+        ? `Name: "${profile.custom_app_name || '{appName} Morphe'}"` 
+        : (appNameMode === "morphe" ? "Name: Morphe" : "Name: Stock");
+      const iconDesc = `Icon: ${iconLabels[appIcon] || 'Original Stock'}`;
       const archDesc = profile.optimize_arch ? (profile.target_arch === "armeabi-v7a" ? "ARM32" : "ARM64") : "Universal";
-      summaryText.innerHTML = `✨ <strong>Active:</strong> ${escapeHtml(profile.name)} &bull; ${escapeHtml(brandDesc)} &bull; ${escapeHtml(archDesc)}`;
+      summaryText.innerHTML = `✨ <strong>Active:</strong> ${escapeHtml(profile.name)} &bull; ${escapeHtml(nameDesc)} &bull; ${escapeHtml(iconDesc)} &bull; ${escapeHtml(archDesc)}`;
     }
 
-    // Set branding
+    // Set branding / app name
     if (brandingChoice) {
-      brandingChoice.value = profile.branding || "original";
-      if (profile.branding === "custom") {
+      brandingChoice.value = appNameMode;
+      if (appNameMode === "custom") {
         if (customAppName) {
           customAppName.style.display = "block";
           const rawTemplate = profile.custom_app_name || "{appName} Morphe";
@@ -1802,6 +1833,11 @@ function applyProfileToUi(profile) {
       } else {
         if (customAppName) customAppName.style.display = "none";
       }
+    }
+
+    // Set app icon
+    if (appIconChoice) {
+      appIconChoice.value = appIcon;
     }
 
     // Set arch
@@ -1845,6 +1881,9 @@ function applyProfileToUi(profile) {
     if (brandingChoice) {
       brandingChoice.value = "original";
       if (customAppName) customAppName.style.display = "none";
+    }
+    if (appIconChoice) {
+      appIconChoice.value = "original";
     }
     updateSuggestedFilename(true);
   }
@@ -1966,9 +2005,21 @@ function renderProfilesGrid(filter = "") {
     const icon = packageIcons[p.package_name] || "📱";
     const isDefault = p.is_default;
     const defaultBadge = isDefault ? `<span class="badge" style="background: rgba(99, 102, 241, 0.25); color: #818cf8; font-weight: 700;">⭐ Default</span>` : "";
-    const brandLabel = p.branding === "custom" 
+    
+    const appNameMode = p.app_name_mode || p.branding || "custom";
+    const brandName = appNameMode === "custom" 
       ? `✏️ "${p.custom_app_name || '{appName} Morphe'}"` 
-      : (p.branding === "morphe" ? "🟣 Morphe" : "🔴 Original Stock");
+      : (appNameMode === "morphe" ? "🟣 Morphe" : "🔴 Original Stock");
+
+    const iconLabels = {
+      "original": "🔴 Original Stock",
+      "black": "⚫ Morphe Black",
+      "dark": "🌘 Morphe Dark",
+      "light": "⚪ Morphe Light",
+      "play": "▶️ Morphe Play",
+      "play_black": "⬛ Morphe Play Black",
+    };
+    const iconLabel = iconLabels[p.app_icon || "original"] || "🔴 Original Stock";
     const archLabel = p.optimize_arch ? (p.target_arch === "armeabi-v7a" ? "ARM32" : "ARM64") : "Universal";
 
     return `
@@ -1991,8 +2042,12 @@ function renderProfilesGrid(filter = "") {
 
           <div class="profile-details-list">
             <div class="profile-detail-row">
-              <span class="profile-detail-label">Branding:</span>
-              <span class="profile-detail-val" title="${escapeHtml(brandLabel)}">${escapeHtml(brandLabel)}</span>
+              <span class="profile-detail-label">App Name:</span>
+              <span class="profile-detail-val" title="${escapeHtml(brandName)}">${escapeHtml(brandName)}</span>
+            </div>
+            <div class="profile-detail-row">
+              <span class="profile-detail-label">App Icon:</span>
+              <span class="profile-detail-val" title="${escapeHtml(iconLabel)}">${escapeHtml(iconLabel)}</span>
             </div>
             <div class="profile-detail-row">
               <span class="profile-detail-label">Output Filename:</span>
@@ -2036,6 +2091,7 @@ function openProfileModal(data = null) {
   const brandingSelect = document.getElementById("modal-branding-select");
   const customNameInput = document.getElementById("modal-custom-name");
   const customNameWrap = document.getElementById("modal-custom-name-wrap");
+  const appIconSelect = document.getElementById("modal-app-icon-select");
   const outputFormatInput = document.getElementById("modal-output-format");
   const isDefaultCheckbox = document.getElementById("modal-is-default");
 
@@ -2058,9 +2114,14 @@ function openProfileModal(data = null) {
       customPackageInput.value = pkg;
     }
 
-    brandingSelect.value = data.branding || "custom";
-    customNameWrap.style.display = brandingSelect.value === "custom" ? "block" : "none";
+    const appNameMode = data.app_name_mode || data.branding || "custom";
+    brandingSelect.value = appNameMode;
+    customNameWrap.style.display = appNameMode === "custom" ? "block" : "none";
     customNameInput.value = data.custom_app_name || "{appName} Morphe";
+
+    if (appIconSelect) {
+      appIconSelect.value = data.app_icon || "original";
+    }
 
     outputFormatInput.value = data.output_format || "{appName}_{version}_{arch}_patched.apk";
     
@@ -2079,6 +2140,9 @@ function openProfileModal(data = null) {
     brandingSelect.value = "custom";
     customNameWrap.style.display = "block";
     customNameInput.value = "{appName} Morphe";
+    if (appIconSelect) {
+      appIconSelect.value = "original";
+    }
     outputFormatInput.value = "{appName}_{version}_{arch}_patched.apk";
     const radio = document.querySelector('input[name="modal-arch"][value="arm64-v8a"]');
     if (radio) radio.checked = true;
@@ -2101,6 +2165,7 @@ async function handleProfileFormSubmit(e) {
   const customPackageInput = document.getElementById("modal-custom-package");
   const brandingSelect = document.getElementById("modal-branding-select");
   const customNameInput = document.getElementById("modal-custom-name");
+  const appIconSelect = document.getElementById("modal-app-icon-select");
   const outputFormatInput = document.getElementById("modal-output-format");
   const isDefaultCheckbox = document.getElementById("modal-is-default");
   const selectedArch = document.querySelector('input[name="modal-arch"]:checked')?.value || "arm64-v8a";
@@ -2114,8 +2179,10 @@ async function handleProfileFormSubmit(e) {
     id: idInput.value || undefined,
     name: nameInput.value.trim(),
     package_name: pkg,
+    app_name_mode: brandingSelect.value,
     branding: brandingSelect.value,
     custom_app_name: customNameInput.value.trim() || "{appName} Morphe",
+    app_icon: appIconSelect ? appIconSelect.value : "original",
     output_format: outputFormatInput.value.trim() || "{appName}_{version}_{arch}_patched.apk",
     optimize_arch: selectedArch !== "universal",
     target_arch: selectedArch,

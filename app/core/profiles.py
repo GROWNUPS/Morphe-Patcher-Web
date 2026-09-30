@@ -107,14 +107,18 @@ def _normalize_profile(file_path: Path, raw_data: Any) -> Dict[str, Any]:
     profile_id = raw_data.get("id") or file_id
     package_name = raw_data.get("package_name") or (file_id if "." in file_id else "*")
     name = raw_data.get("name") or profile_id.replace("_", " ").title()
+    app_name_mode = raw_data.get("app_name_mode") or raw_data.get("branding", "custom")
+    app_icon = raw_data.get("app_icon", "original")
 
     return {
         "id": profile_id,
         "name": name,
         "package_name": package_name,
         "description": raw_data.get("description", ""),
-        "branding": raw_data.get("branding", "original"),
+        "app_name_mode": app_name_mode,
+        "branding": app_name_mode,
         "custom_app_name": raw_data.get("custom_app_name", "{appName} Morphe"),
+        "app_icon": app_icon,
         "output_format": raw_data.get("output_format", "{appName}_{version}_{arch}_patched.apk"),
         "optimize_arch": raw_data.get("optimize_arch", True),
         "target_arch": raw_data.get("target_arch", "arm64-v8a"),
@@ -219,13 +223,18 @@ def save_profile(data: Dict[str, Any]) -> Dict[str, Any]:
                 existing["is_default"] = False
                 _write_profile_to_disk(existing["id"], existing)
 
+    app_name_mode = data.get("app_name_mode") or data.get("branding", "custom")
+    app_icon = data.get("app_icon", "original")
+
     profile_obj = {
         "id": profile_id,
         "name": name,
         "package_name": pkg,
         "description": data.get("description", "").strip(),
-        "branding": data.get("branding", "custom"),
+        "app_name_mode": app_name_mode,
+        "branding": app_name_mode,
         "custom_app_name": data.get("custom_app_name", "{appName} Morphe"),
+        "app_icon": app_icon,
         "output_format": data.get("output_format", "{appName}_{version}_{arch}_patched.apk"),
         "optimize_arch": bool(data.get("optimize_arch", True)),
         "target_arch": data.get("target_arch", "arm64-v8a"),
@@ -280,9 +289,11 @@ def ensure_default_profiles():
             "id": "youtube_morphe",
             "name": "YouTube Morphe",
             "package_name": "com.google.android.youtube",
-            "description": "Default preset for YouTube with Morphe branding and ARM64 optimization.",
+            "description": "Default preset for YouTube with Morphe branding, stock red icon, and ARM64 optimization.",
+            "app_name_mode": "custom",
             "branding": "custom",
             "custom_app_name": "{appName} Morphe",
+            "app_icon": "original",
             "output_format": "{appName}_{version}_{arch}_patched.apk",
             "optimize_arch": True,
             "target_arch": "arm64-v8a",
@@ -294,9 +305,11 @@ def ensure_default_profiles():
             "id": "youtube_music_morphe",
             "name": "YouTube Music Morphe",
             "package_name": "com.google.android.apps.youtube.music",
-            "description": "Default preset for YouTube Music with Morphe branding.",
+            "description": "Default preset for YouTube Music with Morphe branding and stock icon.",
+            "app_name_mode": "custom",
             "branding": "custom",
             "custom_app_name": "{appName} Morphe",
+            "app_icon": "original",
             "output_format": "{appName}_{version}_{arch}_patched.apk",
             "optimize_arch": True,
             "target_arch": "arm64-v8a",
@@ -309,8 +322,10 @@ def ensure_default_profiles():
             "name": "Reddit Clean",
             "package_name": "com.reddit.frontpage",
             "description": "Ad-free Reddit with original stock branding and icon.",
+            "app_name_mode": "original",
             "branding": "original",
             "custom_app_name": "",
+            "app_icon": "original",
             "output_format": "{appName}_{version}_{arch}_patched.apk",
             "optimize_arch": True,
             "target_arch": "arm64-v8a",
@@ -322,9 +337,11 @@ def ensure_default_profiles():
             "id": "universal_morphe",
             "name": "Universal Morphe Suffix",
             "package_name": "*",
-            "description": "Appends 'Morphe' to the detected app name for any application.",
+            "description": "Appends 'Morphe' to the detected app name for any application with stock icon.",
+            "app_name_mode": "custom",
             "branding": "custom",
             "custom_app_name": "{appName} Morphe",
+            "app_icon": "original",
             "output_format": "{appName}_{version}_{arch}_patched.apk",
             "optimize_arch": True,
             "target_arch": "arm64-v8a",

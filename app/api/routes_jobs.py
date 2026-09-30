@@ -20,8 +20,10 @@ class CreateJobRequest(BaseModel):
     exclude_patches: Optional[List[str]] = None
     profile_name: Optional[str] = None
     strip_libs: Optional[str] = None
+    app_name_mode: Optional[str] = None
     branding: Optional[str] = None
     custom_app_name: Optional[str] = None
+    app_icon: Optional[str] = None
     patch_source: Optional[str] = None
     custom_patches_url: Optional[str] = None
 
@@ -102,34 +104,63 @@ def _prepare_job(req: CreateJobRequest) -> Job:
             if p not in includes:
                 includes.append(p)
 
-    # Resolve Branding
-    branding = req.branding
-    if not branding and profile:
-        branding = profile.get("branding", "original")
+    # Resolve App Name Rule & App Icon
+    app_name_mode = req.app_name_mode or req.branding
+    if not app_name_mode and profile:
+        app_name_mode = profile.get("app_name_mode") or profile.get("branding")
+    if not app_name_mode:
+        app_name_mode = "custom"
 
     custom_app_name = req.custom_app_name
-    if not custom_app_name and profile and profile.get("branding") == "custom":
-        custom_app_name = profile.get("custom_app_name")
+    if not custom_app_name and profile:
+        custom_app_name = profile.get("custom_app_name", "{appName} Morphe")
+
+    app_icon = req.app_icon
+    if not app_icon and profile:
+        app_icon = profile.get("app_icon", "original")
+    if not app_icon:
+        app_icon = "original"
 
     patch_options = None
-    if branding == "original":
-        # Disabling Custom branding and Change header keeps original name & icon
-        if "Custom branding" not in excludes:
-            excludes.append("Custom branding")
+
+    # If App Icon is Original Stock, disable Change Header patch so YouTube keeps its original stock in-app header
+    if app_icon == "original":
         if "Change header" not in excludes:
             excludes.append("Change header")
-    elif branding == "custom" and custom_app_name and custom_app_name.strip():
-        resolved_name = resolve_naming_template(
-            custom_app_name.strip(),
-            app_name=app_name,
-            version=req.version_name or "",
-            arch=strip_libs or "",
-        )
-        patch_options = {
-            "Custom branding": {
-                "customName": resolved_name
+
+    # If both App Name and App Icon are set to Original, disable Custom branding entirely
+    if app_name_mode == "original" and app_icon == "original":
+        if "Custom branding" not in excludes:
+            excludes.append("Custom branding")
+    else:
+        branding_opts = {}
+        if app_name_mode == "custom" and custom_app_name and custom_app_name.strip():
+            resolved_name = resolve_naming_template(
+                custom_app_name.strip(),
+                app_name=app_name,
+                version=req.version_name or "",
+                arch=strip_libs or "",
+            )
+            branding_opts["customName"] = resolved_name
+
+        # Set custom appIcon parameter for Morphe Custom branding patch
+        if app_icon:
+            branding_opts["appIcon"] = app_icon
+
+        if branding_opts:
+            patch_options = {
+                "Custom branding": branding_opts
             }
-        }
+
+    if profile and profile.get("patch_options"):
+        merged_opts = dict(profile.get("patch_options"))
+        if patch_options:
+            for k, v in patch_options.items():
+                if k in merged_opts and isinstance(merged_opts[k], dict):
+                    merged_opts[k].update(v)
+                else:
+                    merged_opts[k] = v
+        patch_options = merged_opts
 
     # Resolve patch source (.mpp or URL)
     custom_patches_mpp = None

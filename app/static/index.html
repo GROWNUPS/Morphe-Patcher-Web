@@ -220,19 +220,32 @@
             </summary>
 
             <div class="controls-grid" style="margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid var(--border);">
-              <!-- 1. App Name & Branding Override -->
+              <!-- 1. App Name Override -->
               <div class="form-group">
-                <label for="branding-choice">App Name & Branding Override</label>
+                <label for="branding-choice">App Name Rule</label>
                 <select id="branding-choice" class="form-control">
-                  <option value="original">🔴 Original Stock (Stock Name & Stock Icon)</option>
-                  <option value="morphe">🟣 Morphe Custom (Name: "Morphe" & Custom Icon)</option>
-                  <option value="custom">✏️ Custom App Name...</option>
+                  <option value="custom">✏️ Custom Name (e.g. "{appName} Morphe")</option>
+                  <option value="original">🔴 Original Stock Name</option>
+                  <option value="morphe">🟣 Morphe Name</option>
                 </select>
                 <input type="text" id="custom-app-name" class="form-control" placeholder="e.g. {appName} Morphe" style="display: none; margin-top: 0.5rem;">
               </div>
 
-              <!-- 2. Output APK Filename Override -->
+              <!-- 2. App Icon Preference Override -->
               <div class="form-group">
+                <label for="app-icon-choice">App Icon Preference</label>
+                <select id="app-icon-choice" class="form-control">
+                  <option value="original">🔴 Original Stock Icon (Classic)</option>
+                  <option value="black">⚫ Morphe Black (Default dark monochrome)</option>
+                  <option value="dark">🌘 Morphe Dark</option>
+                  <option value="light">⚪ Morphe Light</option>
+                  <option value="play">▶️ Morphe Play (Red)</option>
+                  <option value="play_black">⬛ Morphe Play Black</option>
+                </select>
+              </div>
+
+              <!-- 3. Output APK Filename Override -->
+              <div class="form-group" style="grid-column: 1 / -1;">
                 <label for="output-name">Output APK Filename Override</label>
                 <input type="text" id="output-name" class="form-control" placeholder="app-morphe-patched.apk">
               </div>
@@ -666,19 +679,35 @@
           <input type="text" id="modal-custom-package" class="form-control" placeholder="Enter Android package name (e.g. com.duolingo)" style="display: none;">
         </div>
 
-        <!-- App Branding & Naming Template -->
+        <!-- App Name Rule & Template -->
         <div class="form-group" style="margin-bottom: 1rem;">
-          <label for="modal-branding-select" style="font-weight: 600; font-size: 0.85rem;">App Name & Branding Rule</label>
+          <label for="modal-branding-select" style="font-weight: 600; font-size: 0.85rem;">App Name Rule</label>
           <select id="modal-branding-select" class="form-control">
             <option value="custom">✏️ Custom Name Template (e.g. "{appName} Morphe")</option>
-            <option value="original">🔴 Original Stock (Keep Stock Name & Icon)</option>
-            <option value="morphe">🟣 Morphe Custom (Name: "Morphe" & Custom Icon)</option>
+            <option value="original">🔴 Original Stock App Name</option>
+            <option value="morphe">🟣 Morphe App Name</option>
           </select>
           <div id="modal-custom-name-wrap" style="margin-top: 0.5rem;">
             <input type="text" id="modal-custom-name" class="form-control" placeholder="{appName} Morphe" value="{appName} Morphe">
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
               💡 <code>{appName}</code> dynamically inserts the detected app name (e.g. YouTube &rarr; <em>YouTube Morphe</em>).
             </div>
+          </div>
+        </div>
+
+        <!-- App Icon Preference -->
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label for="modal-app-icon-select" style="font-weight: 600; font-size: 0.85rem;">App Icon Preference</label>
+          <select id="modal-app-icon-select" class="form-control">
+            <option value="original">🔴 Original Stock Icon (Stock launcher & notification icon)</option>
+            <option value="black">⚫ Morphe Black (Default dark monochrome)</option>
+            <option value="dark">🌘 Morphe Dark</option>
+            <option value="light">⚪ Morphe Light</option>
+            <option value="play">▶️ Morphe Play (Red)</option>
+            <option value="play_black">⬛ Morphe Play Black</option>
+          </select>
+          <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.25rem;">
+            Choose whether to preserve the original stock icon (e.g. YouTube red icon) or use Morphe branded icons.
           </div>
         </div>
 

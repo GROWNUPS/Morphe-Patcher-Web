@@ -100,14 +100,15 @@ flowchart LR
 - **1-Click In-App Update**: Click **`[🔄 Update Patches]`** directly in the dashboard to query GitHub, download new patches, and update recommendations in real time without restarting.
 - **Community & Custom Bundles**: Easily drop in third-party or custom `.mpp` patch packages via the Web UI or `./config/patches.mpp`.
 
-### 📋 Patch Profiles & Presets (Automated Branding)
+### 📋 Patch Profiles & Presets (Automated Branding & App Customization)
 - **Per-App & Universal Presets**: Create reusable presets customized for specific packages (e.g. YouTube, YouTube Music, Reddit) or universal presets that apply across all apps.
+- **Independent App Name & App Icon Customization**: Configure your App Name Rule and App Icon Preference separately. Combine custom name templates (e.g. `{appName} Morphe`) with your choice of icon styles—including **Original Stock Icon** (keeps classic unpatched stock launcher and notification icons, e.g. red YouTube) or Morphe Black, Dark, Light, and Play styles.
 - **Dynamic Template Engine (`{appName} Morphe`)**: Configure custom branding templates using `{appName}` (or `{app_name}`). Patchium automatically resolves the detected app title (e.g. *YouTube* $\rightarrow$ **"YouTube Morphe"**, *YouTube Music* $\rightarrow$ **"YouTube Music Morphe"**)—no more tedious manual typing for every build.
 - **Custom Output Filename Templates**: Define flexible output patterns with dynamic placeholder chips (`{appName}`, `{version}`, `{arch}`) for clean, predictable naming across your entire library.
 - **Context-Aware Smart Filtering**: When an APK is uploaded, the dashboard automatically filters available presets to match that specific app and pre-selects your designated default preset.
 - **Streamlined Inspect Screen**: Replaced clutter with a primary Preset Selector, active configuration summary chip, and a collapsible **"⚙️ Advanced Options & Overrides"** accordion for occasional one-off tweaks.
 - **1-Click Preset Creator**: Jump directly from the inspect screen into the profile creator with the uploaded APK's package name and detected app title pre-filled.
-- **Deep Hot-Folder Daemon Integration**: The `./watch` daemon automatically identifies default profiles matching incoming APK packages and applies their custom branding, architecture, and output filename templates autonomously.
+- **Deep Hot-Folder Daemon Integration**: The `./watch` daemon automatically identifies default profiles matching incoming APK packages and applies their custom branding, icon styles, architecture, and output filename templates autonomously.
 
 ### 📥 Flexible APK Import
 - **Drag & Drop Upload**: Upload APKs directly from your browser.

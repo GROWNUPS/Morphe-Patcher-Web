@@ -21,8 +21,10 @@ class ProfileModel(BaseModel):
     name: str = Field(..., min_length=1, description="Human readable profile name")
     package_name: str = Field(..., description="Target Android package name, or * for universal")
     description: Optional[str] = ""
-    branding: str = Field(default="custom", description="'original', 'morphe', or 'custom'")
+    app_name_mode: Optional[str] = Field(default="custom", description="'custom', 'original', or 'morphe'")
+    branding: Optional[str] = Field(default=None, description="Legacy alias for app_name_mode")
     custom_app_name: Optional[str] = Field(default="{appName} Morphe", description="Template with {appName}")
+    app_icon: str = Field(default="original", description="'original', 'black', 'dark', 'light', 'play', or 'play_black'")
     output_format: Optional[str] = Field(default="{appName}_{version}_{arch}_patched.apk")
     optimize_arch: bool = Field(default=True, description="Optimize for 64-bit phones")
     target_arch: str = Field(default="arm64-v8a", description="'arm64-v8a', 'armeabi-v7a', or 'universal'")
