@@ -116,7 +116,7 @@ async def download_patch_bundle_from_url(req: DownloadUrlRequest):
         # Download file
         req_obj = urllib.request.Request(
             url,
-            headers={"User-Agent": "Morphe-Patcher-Web/1.0"}
+            headers={"User-Agent": "Patchium/1.0"}
         )
         with urllib.request.urlopen(req_obj, timeout=60) as response, open(dest_path, "wb") as out_file:
             shutil.copyfileobj(response, out_file)

@@ -1,21 +1,22 @@
 
-# <p align="center"><img src="app/static/logo.png" width="56" height="56" alt="Morphe Patcher Web Logo" style="vertical-align: middle; margin-right: 12px;"> Morphe Patcher Web</p>
+# <p align="center"><img src="app/static/logo.png" width="56" height="56" alt="Patchium Logo" style="vertical-align: middle; margin-right: 12px;"> Patchium</p>
 
 <p align="center">
-  <strong>A feature packed & automated patcher for Morphe with Web Dashboard — built for headless servers.</strong>
+  <strong>A feature-packed & automated Android APK patching suite with Web Dashboard — built for headless servers.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/MorpheApp/morphe-desktop"><img src="https://img.shields.io/badge/Morphe%20CLI-Compatible-blueviolet?logo=android&logoColor=white" alt="Morphe CLI"></a>
-  <a href="https://github.com/GROWNUPS/Morphe-Patcher-Web/pkgs/container/morphe-patcher-web"><img src="https://img.shields.io/badge/GHCR.io-Docker%20Image-2496ED?logo=docker&logoColor=white" alt="GHCR Docker Image"></a>
+  <a href="https://github.com/MorpheApp/morphe-desktop"><img src="https://img.shields.io/badge/Engine-Morphe%20CLI%20Compatible-blueviolet?logo=android&logoColor=white" alt="Morphe CLI Compatible"></a>
+  <a href="https://github.com/GROWNUPS/Patchium/pkgs/container/patchium"><img src="https://img.shields.io/badge/GHCR.io-Docker%20Image-2496ED?logo=docker&logoColor=white" alt="GHCR Docker Image"></a>
   <img src="https://img.shields.io/badge/Python-3.12+-3776AB?logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/FastAPI-Framework-009688?logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/Architecture-ARM64%20%7C%20AMD64-blue" alt="Arch">
   <img src="https://img.shields.io/badge/License-GPLv3-green" alt="License">
 </p>
 
-> ⚠️ **Disclaimer:**  
-> This project is strictly an open-source Web GUI wrapper around the official Morphe CLI. It **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware.
+> ⚠️ **Disclaimer & Trademark Notice:**  
+> **Patchium** is an independent, open-source Web GUI wrapper compatible with the Morphe CLI. Patchium **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware (BYOA — Bring Your Own APK).  
+> Patchium is not affiliated with, endorsed by, or sponsored by Morphe. Morphe and all related trademarks are the property of their respective owners.
 
 <p align="center"><sub><i>🤖 This project was built with AI assistance and is intended for personal use. It may contain bugs or rough edges. Review the code and use it at your own risk, especially before exposing it beyond your local network 🤖</i></sub></p>
 
@@ -50,9 +51,9 @@ Patching Android applications using patchers like Morphe have some friction :
 2. **Mobile Patchers Drain and Throttle Your Phone**: Running patchers directly on Android requires massive CPU and RAM overhead for decompiling, modifying bytecode, repacking, and zipaligning. On budget or mid-range devices, this causes aggressive CPU throttling, out-of-memory crashes, rapid battery drain, and forces you to leave your screen awake for minutes.
 3. **Manual CLI Workflows are Tedious**: Using the CLI manually requires configuring Java environments, keeping keystores synchronized across updates, checking GitHub releases constantly for new patch bundles, and manually hunting down which specific APK version is supported by the active patches.
 
-### 💡 The Solution: Morphe Patcher Web
+### 💡 The Solution: Patchium
 
-**Morphe Patcher Web** turns your always-on home server or homelab into an autonomous, 24/7 patching station:
+**Patchium** turns your always-on home server or homelab into an autonomous, 24/7 patching station:
 
 - **100% Headless & Containerized**: Runs in lightweight Docker containers across x86_64 and ARM64 (Raspberry Pi, mini PCs, NAS devices). No GUI or display server required.
 - **Zero Guesswork Target Guidance**: Inspects the patch bundle dynamically via Morphe CLI to show you exact recommended APK versions, and provides 1-click direct search links to APKMirror.
@@ -73,10 +74,10 @@ flowchart LR
 
 ##  
 > 🔒
-> **Important Security Notice**: Morphe Patcher Web was created for home local area networks (LAN) and trusted homelab environments. The dashboard allows file uploads, arbitrary URL downloads, custom keystore operations, and executes CLI processes on the host.
+> **Important Security Notice**: Patchium was created for home local area networks (LAN) and trusted homelab environments. The dashboard allows file uploads, arbitrary URL downloads, custom keystore operations, and executes CLI processes on the host.
 > 
 > **Do NOT expose this application directly to the open internet without an authentication layer and HTTPS reverse proxy!**
-> If you want to access Morphe Patcher Web remotely outside your home network, place it behind a **Reverse Proxy** with **Authentication**, or access it through a private overlay network (such as **Tailscale** or **Netbird**).
+> If you want to access Patchium remotely outside your home network, place it behind a **Reverse Proxy** with **Authentication**, or access it through a private overlay network (such as **Tailscale** or **Netbird**).
 
 
 ---
@@ -128,7 +129,7 @@ flowchart LR
 
 ## 🚀 Quick Start
 
-Morphe Patcher Web is distributed as an automated multi-arch container (`linux/amd64` and `linux/arm64`) on GitHub Container Registry (**GHCR**). You can run it instantly without cloning the source code.
+Patchium is distributed as an automated multi-arch container (`linux/amd64` and `linux/arm64`) on GitHub Container Registry (**GHCR**). You can run it instantly without cloning the source code.
 
 ---
 
@@ -143,9 +144,9 @@ Ideal if you want to keep your ports, permissions, and webhook URLs neatly separ
 **`docker-compose.yml`**:
 ```yaml
 services:
-  morphe-patcher:
-    image: ghcr.io/grownups/morphe-patcher-web:latest
-    container_name: morphe-patcher
+  patchium:
+    image: ghcr.io/grownups/patchium:latest
+    container_name: patchium
     ports:
       - "${PORT:-8080}:8080"
     environment:
@@ -202,9 +203,9 @@ If you prefer a single self-contained file without creating an extra `.env` file
 **`docker-compose.yml`**:
 ```yaml
 services:
-  morphe-patcher:
-    image: ghcr.io/grownups/morphe-patcher-web:latest
-    container_name: morphe-patcher
+  patchium:
+    image: ghcr.io/grownups/patchium:latest
+    container_name: patchium
     ports:
       - "8080:8080"
     environment:
@@ -236,14 +237,14 @@ Run standalone directly from your terminal:
 
 ```bash
 docker run -d \
-  --name morphe-patcher \
+  --name patchium \
   -p 8080:8080 \
   -v ./watch:/app/watch \
   -v ./output:/app/output \
   -v ./config:/app/config \
   -v ./cache:/app/cache \
   --restart unless-stopped \
-  ghcr.io/grownups/morphe-patcher-web:latest
+  ghcr.io/grownups/patchium:latest
 ```
 *(Tip: Pass custom environment flags using `-e KEY=VALUE` or load a `.env` file via `--env-file .env`)*
 
@@ -253,8 +254,8 @@ docker run -d \
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/GROWNUPS/Morphe-Patcher-Web.git
-cd Morphe-Patcher-Web
+git clone https://github.com/GROWNUPS/Patchium.git
+cd Patchium
 
 # 2. Configure environment (optional)
 cp .env.example .env
@@ -316,10 +317,11 @@ For offline environments or custom community builds:
 
 ## ⚖️ Disclaimer & Credits
 
-> ⚠️ **Compliance Notice**: This project is strictly an open-source Web GUI wrapper around the official Morphe CLI. It **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware (BYOA — Bring Your Own APK).
+> ⚠️ **Compliance & Trademark Notice**: Patchium is strictly an independent open-source Web GUI wrapper compatible with the official Morphe CLI. It **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware (BYOA — Bring Your Own APK).  
+> Patchium is not affiliated with, sponsored by, or endorsed by Morphe. Morphe and all related marks and logos are trademarks of their respective owners.
 
-This project is an independent, community-driven open-source web interface and automation wrapper.
+This project is an independent, community-driven open-source web interface and automation suite.
 
-- All patching capabilities and patch definitions are powered by **[Morphe](https://github.com/MorpheApp)**.
+- Core patching engine and patch definitions are powered by **[Morphe](https://github.com/MorpheApp)**.
 - This project is not officially affiliated with or endorsed by Morphe or any modified application.
 - Please support the Morphe developers and project maintainers **[here](https://morphe.software/donate)**.

@@ -67,7 +67,7 @@ async def fetch_latest_morphe_patches_info() -> Optional[Dict[str, Any]]:
     """Query GitHub releases API for latest Morphe patches release."""
     api_url = f"https://api.github.com/repos/{MORPHE_PATCHES_REPO}/releases/latest"
     headers = {
-        "User-Agent": "Morphe-Patcher-Web/1.0",
+        "User-Agent": "Patchium/1.0",
         "Accept": "application/vnd.github.v3+json",
     }
     try:

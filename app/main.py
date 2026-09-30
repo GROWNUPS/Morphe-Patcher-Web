@@ -30,11 +30,11 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
-logger = logging.getLogger("morphe.main")
+logger = logging.getLogger("patchium.main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Initializing Morphe Patcher Web Service...")
+    logger.info("Initializing Patchium Web Service...")
 
     ensure_keystore()
     queue_manager.start()
@@ -46,12 +46,12 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    logger.info("Shutting down Morphe Patcher Web Service...")
+    logger.info("Shutting down Patchium Web Service...")
     hot_folder_watcher.stop()
 
 app = FastAPI(
-    title="Morphe Patcher Web",
-    description="Headless Remote Web Interface & Hot-Folder Automation for Morphe Patcher",
+    title="Patchium",
+    description="Headless Remote Web Interface & Hot-Folder Automation for Android APK Patching",
     version="1.0.0",
     lifespan=lifespan,
 )

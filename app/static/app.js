@@ -52,7 +52,7 @@ function setupThemeToggle() {
       const nextTheme = activeTheme === "light" ? "dark" : "light";
       document.documentElement.setAttribute("data-theme", nextTheme);
       try {
-        localStorage.setItem("morphe_theme", nextTheme);
+        localStorage.setItem("patchium_theme", nextTheme);
       } catch (e) {}
       syncThemeUI(nextTheme);
     });
@@ -574,7 +574,7 @@ function createStagedApk(data) {
   const cleanName = (data.app_name || "app").toLowerCase().replace(/[^a-z0-9]/g, "_");
   const ver = data.version_name ? `_${data.version_name}` : "";
   const defaultArch = "arm64-v8a";
-  const defaultFilename = `${cleanName}${ver}_arm64_morphe_patched.apk`;
+  const defaultFilename = `${cleanName}${ver}_arm64_patched.apk`;
 
   return {
     id: "apk_" + Date.now() + "_" + Math.random().toString(36).substr(2, 5),
@@ -723,7 +723,7 @@ function updateSuggestedFilename(force = false) {
     archTag = "_universal";
   }
 
-  outputNameInput.value = `${cleanName}${ver}${archTag}_morphe_patched.apk`;
+  outputNameInput.value = `${cleanName}${ver}${archTag}_patched.apk`;
 }
 
 function setupBatchControls() {
@@ -772,7 +772,7 @@ function setupBatchControls() {
         const cleanName = (item.app_name || "app").toLowerCase().replace(/[^a-z0-9]/g, "_");
         const ver = item.version_name ? `_${item.version_name}` : "";
         const tag = archVal === "armeabi-v7a" ? "_arm32" : (archVal === "universal" ? "_universal" : "_arm64");
-        item.output_filename = `${cleanName}${ver}${tag}_morphe_patched.apk`;
+        item.output_filename = `${cleanName}${ver}${tag}_patched.apk`;
       });
       renderBatchItems();
     });
@@ -1397,7 +1397,7 @@ function setupSystem() {
   const btnResetKeystore = document.getElementById("btn-reset-keystore");
   if (btnResetKeystore) {
     btnResetKeystore.addEventListener("click", async () => {
-      if (confirm("Reset signing keystore back to default auto-generated Morphe keystore?")) {
+      if (confirm("Reset signing keystore back to default auto-generated keystore?")) {
         try {
           const res = await fetch("/api/keystore/reset", { method: "POST" });
           const data = await res.json();

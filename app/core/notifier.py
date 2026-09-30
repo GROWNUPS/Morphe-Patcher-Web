@@ -18,7 +18,7 @@ async def send_notification(title: str, message: str, status: str = "success") -
                 headers = {
                     "Title": f"{emoji} {title}",
                     "Priority": "high" if status != "success" else "default",
-                    "Tags": "morphe,android,apk"
+                    "Tags": "patchium,android,apk"
                 }
                 res = await client.post(url, data=message.encode("utf-8"), headers=headers)
                 return res.status_code in (200, 201)
@@ -30,7 +30,7 @@ async def send_notification(title: str, message: str, status: str = "success") -
                             "title": f"{emoji} {title}",
                             "description": message,
                             "color": color,
-                            "footer": {"text": "Morphe Patcher Headless"}
+                            "footer": {"text": "Patchium Automation Suite"}
                         }
                     ]
                 }

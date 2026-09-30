@@ -68,7 +68,7 @@ def ensure_keystore() -> bool:
         "-validity", "10000",
         "-storepass", KEYSTORE_PASSWORD,
         "-keypass", KEYSTORE_KEY_PASSWORD,
-        "-dname", "CN=Morphe Patcher, OU=SelfHosted, O=Morphe, L=Server, S=Global, C=US"
+        "-dname", "CN=Patchium, OU=SelfHosted, O=Patchium, L=Server, S=Global, C=US"
     ]
 
     try:

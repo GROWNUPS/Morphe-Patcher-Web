@@ -1,8 +1,8 @@
 services:
-  morphe-patcher:
+  patchium:
     build: .
-    image: ghcr.io/grownups/morphe-patcher-web:latest
-    container_name: morphe-patcher
+    image: ghcr.io/grownups/patchium:latest
+    container_name: patchium
     ports:
       - "${PORT:-8080}:8080"
     environment:

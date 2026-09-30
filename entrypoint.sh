@@ -5,7 +5,7 @@ set -e
 PUID=${PUID:-1000}
 PGID=${PGID:-1000}
 
-echo "[INFO] Starting Morphe Patcher Web Service (PUID=${PUID}, PGID=${PGID})..."
+echo "[INFO] Starting Patchium Web Service (PUID=${PUID}, PGID=${PGID})..."
 
 # Create group and user if they do not exist
 if ! getent group morphe >/dev/null 2>&1; then
@@ -40,7 +40,7 @@ if [ ! -f "/app/config/patches.mpp" ] && [ ! -f "/app/patches.mpp" ]; then
     python3 -c "
 import urllib.request, json, shutil
 try:
-    req = urllib.request.Request('https://api.github.com/repos/MorpheApp/morphe-patches/releases/latest', headers={'User-Agent': 'Morphe-Patcher-Web/1.0'})
+    req = urllib.request.Request('https://api.github.com/repos/MorpheApp/morphe-patches/releases/latest', headers={'User-Agent': 'Patchium/1.0'})
     with urllib.request.urlopen(req, timeout=30) as resp:
         data = json.loads(resp.read().decode())
     url = None
