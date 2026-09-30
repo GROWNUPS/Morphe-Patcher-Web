@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import logging
@@ -6,7 +7,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from app.config import MORPHE_JAR, PATCHES_FILE
+from app.config import MORPHE_JAR, PATCHES_FILE, CACHE_DIR
 
 logger = logging.getLogger("morphe.version_checker")
 
@@ -76,23 +77,31 @@ def get_compatible_versions_data(patches_file: Optional[Path] = None, force_refr
         return _CACHE
 
     try:
+        morphe_env = dict(os.environ)
+        morphe_env["MORPHE_DATA_DIR"] = str(CACHE_DIR / "morphe")
+        morphe_env["XDG_DATA_HOME"] = str(CACHE_DIR)
+
         # Run list-versions for stable versions
         cmd_stable = [
-            "java", "-jar", str(jar_file),
+            "java",
+            f"-Duser.home={CACHE_DIR}",
+            "-jar", str(jar_file),
             "list-versions",
             "--patches", str(p_file)
         ]
-        res_stable = subprocess.run(cmd_stable, capture_output=True, text=True, timeout=20)
+        res_stable = subprocess.run(cmd_stable, capture_output=True, text=True, timeout=20, env=morphe_env)
         stable_data = _parse_list_versions_output(res_stable.stdout)
 
         # Run list-versions with experimental versions
         cmd_exp = [
-            "java", "-jar", str(jar_file),
+            "java",
+            f"-Duser.home={CACHE_DIR}",
+            "-jar", str(jar_file),
             "list-versions",
             "--patches", str(p_file),
             "--include-experimental"
         ]
-        res_exp = subprocess.run(cmd_exp, capture_output=True, text=True, timeout=20)
+        res_exp = subprocess.run(cmd_exp, capture_output=True, text=True, timeout=20, env=morphe_env)
         exp_data = _parse_list_versions_output(res_exp.stdout)
 
         results: Dict[str, Any] = {}

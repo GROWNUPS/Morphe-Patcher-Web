@@ -47,6 +47,9 @@ class MorpheRunner:
         if JAVA_OPTS:
             cmd.extend(shlex.split(JAVA_OPTS))
 
+        # Ensure JVM user.home points to the writable persistent cache directory
+        cmd.append(f"-Duser.home={CACHE_DIR}")
+
         cmd.extend(["-jar", str(MORPHE_JAR)])
         cmd.append("patch")
 
@@ -132,8 +135,15 @@ class MorpheRunner:
             morphe_data_dir.mkdir(parents=True, exist_ok=True)
             morphe_tmp_dir.mkdir(parents=True, exist_ok=True)
 
+            for fallback_dir in [Path("/app/morphe"), Path.home() / "morphe"]:
+                try:
+                    fallback_dir.mkdir(parents=True, exist_ok=True)
+                except Exception:
+                    pass
+
             sub_env = os.environ.copy()
             sub_env["MORPHE_DATA_DIR"] = str(morphe_data_dir)
+            sub_env["XDG_DATA_HOME"] = str(CACHE_DIR)
 
             self.current_process = await asyncio.create_subprocess_exec(
                 *cmd,
