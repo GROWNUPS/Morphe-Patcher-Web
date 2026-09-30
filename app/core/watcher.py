@@ -48,12 +48,23 @@ class HotFolderWatcher:
         self.recent_events: list[dict] = []
         self._loop: Optional[asyncio.AbstractEventLoop] = None
 
-    def start(self, loop: asyncio.AbstractEventLoop):
-        if not AUTO_WATCH:
+    def start(self, loop: Optional[asyncio.AbstractEventLoop] = None, force: bool = False):
+        if not AUTO_WATCH and not force:
             logger.info("Hot-folder watcher is disabled via AUTO_WATCH=false")
             return
 
-        self._loop = loop
+        if self.observer and self.observer.is_alive():
+            logger.info("Hot-folder watcher is already running.")
+            return
+
+        if loop:
+            self._loop = loop
+        elif not self._loop:
+            try:
+                self._loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
         self.watch_dir.mkdir(parents=True, exist_ok=True)
         self.processed_dir.mkdir(parents=True, exist_ok=True)
 
@@ -237,17 +248,40 @@ class HotFolderWatcher:
         except Exception as e:
             logger.error(f"Error executing post-patch action for {input_path.name}: {e}")
 
+    def is_running(self) -> bool:
+        return bool(self.observer and self.observer.is_alive())
+
+    def toggle(self, enable: Optional[bool] = None) -> bool:
+        """Toggles watcher live on or off without restarting server."""
+        running = self.is_running()
+        target = not running if enable is None else bool(enable)
+        if target and not running:
+            self.start(force=True)
+        elif not target and running:
+            self.stop()
+        return self.is_running()
+
     def get_status(self) -> Dict[str, Any]:
+        running = self.is_running()
         return {
-            "enabled": AUTO_WATCH,
+            "enabled": running,
+            "running": running,
+            "configured_auto_watch": AUTO_WATCH,
             "watch_dir": str(self.watch_dir),
+            "action_after_patch": WATCH_ACTION_AFTER_PATCH,
             "pending_files": [p.name for p in self.processing_files],
-            "recent_events": self.recent_events[-10:],
+            "recent_events": self.recent_events[-15:],
         }
 
     def stop(self):
         if self.observer:
-            self.observer.stop()
-            self.observer.join()
+            try:
+                self.observer.stop()
+                self.observer.join(timeout=2)
+            except Exception as e:
+                logger.warning(f"Error stopping watcher observer: {e}")
+            finally:
+                self.observer = None
+            logger.info("Hot-Folder Watcher stopped.")
 
 hot_folder_watcher = HotFolderWatcher()

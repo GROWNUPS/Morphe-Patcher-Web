@@ -26,6 +26,7 @@ from app.api.routes_system import router as system_router
 from app.api.routes_keystore import router as keystore_router
 from app.api.routes_patches import router as patches_router
 from app.api.routes_profiles import router as profiles_router
+from app.api.routes_library import router as library_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -72,6 +73,7 @@ app.include_router(system_router)
 app.include_router(keystore_router)
 app.include_router(patches_router)
 app.include_router(profiles_router)
+app.include_router(library_router)
 
 static_dir = Path(__file__).resolve().parent / "static"
 if static_dir.exists():

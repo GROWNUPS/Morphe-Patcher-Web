@@ -10,7 +10,7 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-Etc/UTC}
       - JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx2048m -XX:+UseContainerSupport}
-      - AUTO_WATCH=${AUTO_WATCH:-true}
+      - AUTO_WATCH=${AUTO_WATCH:-false}
       - WATCH_DEBOUNCE_SECONDS=${WATCH_DEBOUNCE_SECONDS:-5}
       - WATCH_ACTION_AFTER_PATCH=${WATCH_ACTION_AFTER_PATCH:-archive} # 'archive', 'delete', or 'keep'
       - WEBHOOK_URL=${WEBHOOK_URL:-} # e.g. https://ntfy.sh/my-topic or Discord webhook URL
@@ -18,7 +18,9 @@ services:
       - MORPHE_PATCHES_REPO=${MORPHE_PATCHES_REPO:-MorpheApp/morphe-patches}
       - MORPHE_DATA_DIR=${MORPHE_DATA_DIR:-/app/cache/morphe}
     volumes:
-      # Watched hot folder: Drop unpatched APKs here to patch automatically
+      # Persistent Base APK Library: Store unpatched APKs for 1-click patching without re-uploading
+      - ./library:/app/library
+      # Watched hot folder: Drop unpatched APKs here to patch automatically (if enabled in Settings)
       - ./watch:/app/watch
       # Output folder: Patched APKs appear here
       - ./output:/app/output

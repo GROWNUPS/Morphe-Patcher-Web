@@ -56,4 +56,15 @@ async def update_patches_bundle():
         raise HTTPException(status_code=500, detail="Failed to update patches bundle from GitHub.")
     return {"success": True, "message": "Patches bundle updated successfully."}
 
+class WatcherToggleRequest(BaseModel):
+    enabled: Optional[bool] = None
+
+@router.post("/watcher/toggle")
+async def toggle_watcher(payload: Optional[WatcherToggleRequest] = None):
+    """Toggle hot-folder watcher daemon on or off."""
+    enabled = payload.enabled if payload else None
+    state = hot_folder_watcher.toggle(enabled)
+    return {"success": True, "enabled": state, "status": hot_folder_watcher.get_status()}
+
+
 

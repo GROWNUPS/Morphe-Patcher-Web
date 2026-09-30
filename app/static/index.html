@@ -69,9 +69,9 @@
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
       Output APKs (<span id="output-count">0</span>)
     </button>
-    <button class="tab-btn" data-tab="watcher">
-      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-      Hot Folder Watcher
+    <button class="tab-btn" data-tab="library">
+      <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+      Base APKs (<span id="library-count">0</span>)
     </button>
     <button class="tab-btn" data-tab="profiles">
       <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
@@ -119,6 +119,9 @@
           <button type="button" class="input-mode-btn" id="input-mode-url">
             🌐 Download APK via URL
           </button>
+          <button type="button" class="input-mode-btn" id="input-mode-library">
+            📦 Select from Base APK Library
+          </button>
         </div>
 
         <!-- Dropzone (File Upload) -->
@@ -148,6 +151,38 @@
             <div class="spinner-small"></div>
             <span id="url-status-text">Connecting to remote server...</span>
           </div>
+        </div>
+
+        <!-- Select from Base APK Library Card -->
+        <div id="library-select-card" class="url-download-card" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <span style="font-size: 1.4rem;">📦</span>
+              <div>
+                <div style="font-weight: 600; color: var(--text-main);">Select from Persistent Base APK Library</div>
+                <div style="font-size: 0.82rem; color: var(--text-muted);">Pick any previously saved or uploaded APK to inspect & patch instantly without re-uploading</div>
+              </div>
+            </div>
+            <button type="button" id="link-goto-library" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
+              Manage Library &rarr;
+            </button>
+          </div>
+          <div style="display: flex; gap: 0.6rem; flex-wrap: wrap;">
+            <select id="quick-library-select" class="form-control" style="flex: 1; min-width: 280px; font-size: 0.95rem;">
+              <option value="">Choose a stored APK from library...</option>
+            </select>
+            <button type="button" id="btn-quick-load-library" class="btn" style="white-space: nowrap; padding: 0.65rem 1.25rem;">
+              ⚡ Load & Inspect APK
+            </button>
+          </div>
+        </div>
+
+        <!-- Auto-save to Library Checkbox -->
+        <div id="save-library-wrap" style="display: flex; justify-content: flex-start; align-items: center; margin-top: 0.85rem; padding: 0 0.25rem;">
+          <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text-muted); cursor: pointer; user-select: none;">
+            <input type="checkbox" id="chk-save-to-library" checked style="width: 16px; height: 16px; accent-color: var(--primary); cursor: pointer;">
+            <span>💾 <strong>Save copy to Base APK Library</strong> for future 1-click re-patching</span>
+          </label>
         </div>
 
         <!-- Upload Progress -->
@@ -447,44 +482,42 @@
       </div>
     </section>
 
-    <!-- Tab 4: Hot Folder Watcher -->
-    <section id="tab-watcher" class="tab-content">
+    <!-- Tab 4: Base APK Library -->
+    <section id="tab-library" class="tab-content">
       <div class="card">
-        <h2 class="card-title">Hot Folder Watcher (/app/watch)</h2>
-        <p class="card-desc">Drop any original APK into your host's <code>./watch</code> folder. The daemon will automatically detect it, verify the transfer, apply patches, and move the result to <code>./output</code>.</p>
-
-        <div class="controls-grid" style="margin-bottom: 1.5rem;">
-          <div style="background: #030712; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Watched Directory</div>
-            <div style="font-family: monospace; font-size: 0.95rem; margin-top: 0.25rem;" id="watcher-dir-text">/app/watch</div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+          <div>
+            <h2 class="card-title" style="margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem;">
+              <span>📦</span>
+              <span>Base APK Library</span>
+            </h2>
+            <p class="card-desc" style="margin-bottom: 0;">Persistent library of unpatched base APKs saved on your server. Pick any APK to patch instantly without re-uploading from your device.</p>
           </div>
-          <div style="background: #030712; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
-            <div style="font-size: 0.8rem; color: var(--text-muted);">Daemon Status</div>
-            <div style="font-weight: 600; color: var(--accent); margin-top: 0.25rem;" id="watcher-status-text">Active & Monitoring</div>
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <input type="file" id="library-file-input" accept=".apk" style="display: none;">
+            <button id="btn-upload-to-library" class="btn btn-primary" type="button" style="display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1rem;">
+              <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              <span>Add APK to Library</span>
+            </button>
           </div>
         </div>
 
-        <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Currently Processing Files</h3>
-        <div id="watcher-pending-list" style="background: #030712; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1.5rem; font-family: monospace; font-size: 0.85rem; color: var(--text-muted);">
-          No files currently stabilizing or transferring.
+        <!-- Filter / Storage Row -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="flex: 1; max-width: 400px;">
+            <input type="text" id="library-search-input" class="form-control" placeholder="Search saved APKs by name or package...">
+          </div>
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <span id="library-storage-badge" class="badge" style="font-size: 0.8rem; background: var(--badge-bg); color: var(--text-muted);">0 APKs • 0 MB</span>
+            <button id="btn-refresh-library" class="btn btn-secondary" style="padding: 0.35rem 0.65rem; font-size: 0.8rem;" title="Refresh library list">
+              🔄 Refresh
+            </button>
+          </div>
         </div>
 
-        <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Recent Auto-Patch Events</h3>
-        <div style="overflow-x: auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Time</th>
-                <th>File</th>
-                <th>Event Status</th>
-              </tr>
-            </thead>
-            <tbody id="watcher-events-tbody">
-              <tr>
-                <td colspan="3" style="text-align: center; color: var(--text-muted);">No recent watcher events.</td>
-              </tr>
-            </tbody>
-          </table>
+        <!-- Library Grid Container -->
+        <div id="library-grid" class="library-grid-container">
+          <!-- Rendered dynamically -->
         </div>
       </div>
     </section>
@@ -644,6 +677,54 @@
           </div>
         </div>
       </div>
+
+      <!-- 3. Hot-Folder Auto-Watcher Daemon Card -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.75rem;">
+          <div style="display: flex; align-items: center; gap: 0.6rem;">
+            <h2 class="card-title" style="margin-bottom: 0;">📁 Hot-Folder Auto-Watcher Daemon</h2>
+            <span id="watcher-badge" class="badge" style="background: rgba(156, 163, 175, 0.2); color: var(--text-muted); font-weight: 600;">Disabled</span>
+          </div>
+          <button id="btn-toggle-watcher" type="button" class="btn btn-secondary" style="padding: 0.35rem 0.85rem; font-size: 0.82rem; font-weight: 600;">
+            ⚡ Enable Watcher
+          </button>
+        </div>
+        <p class="card-desc">When active, the background daemon monitors the <code>/app/watch</code> directory. Dropping any base APK into this folder automatically patches it using its assigned default profile and outputs the result to <code>./output</code>.</p>
+
+        <div class="controls-grid" style="margin-bottom: 1.25rem;">
+          <div style="background: #030712; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Watched Folder Path</div>
+            <div style="font-family: monospace; font-size: 0.9rem; margin-top: 0.25rem;" id="watcher-dir-text">/app/watch</div>
+          </div>
+          <div style="background: #030712; padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+            <div style="font-size: 0.78rem; color: var(--text-muted);">Post-Patch Source File Action</div>
+            <div style="font-family: monospace; font-size: 0.9rem; margin-top: 0.25rem;" id="watcher-action-text">Archive to /watch/processed</div>
+          </div>
+        </div>
+
+        <h3 style="font-size: 0.92rem; margin-bottom: 0.5rem; color: var(--text-main);">Currently Processing Files</h3>
+        <div id="watcher-pending-list" style="background: #030712; border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; font-family: monospace; font-size: 0.82rem; color: var(--text-muted);">
+          No files currently stabilizing or transferring.
+        </div>
+
+        <h3 style="font-size: 0.92rem; margin-bottom: 0.5rem; color: var(--text-main);">Recent Watcher Events</h3>
+        <div style="overflow-x: auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>File</th>
+                <th>Event Status</th>
+              </tr>
+            </thead>
+            <tbody id="watcher-events-tbody">
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted);">No recent watcher events.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -720,6 +801,8 @@
             <button type="button" class="btn btn-secondary tag-pill" data-tag="{appName}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{appName}</button>
             <button type="button" class="btn btn-secondary tag-pill" data-tag="{version}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{version}</button>
             <button type="button" class="btn btn-secondary tag-pill" data-tag="{arch}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;">{arch}</button>
+            <button type="button" class="btn btn-secondary tag-pill" data-tag="{date}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;" title="Date (YYYY-MM-DD)">{date}</button>
+            <button type="button" class="btn btn-secondary tag-pill" data-tag="{date_compact}" style="padding: 0.15rem 0.45rem; font-size: 0.72rem;" title="Compact Date (YYYYMMDD)">{date_compact}</button>
           </div>
         </div>
 

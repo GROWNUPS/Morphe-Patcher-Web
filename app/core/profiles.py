@@ -1,6 +1,7 @@
 import json
 import logging
 import re
+import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Any
 
@@ -46,7 +47,7 @@ def resolve_naming_template(template: str, app_name: str, version: str = "", arc
 def resolve_filename_template(template: str, app_name: str, version: str = "", arch: str = "") -> str:
     """
     Resolves output filename placeholders.
-    Example: '{appName}_{version}_{arch}_patched.apk'
+    Example: '{appName}_{version}_{arch}_{date}_patched.apk'
     """
     clean_app = re.sub(r'[^a-zA-Z0-9]', '_', (app_name or "app").lower())
     clean_app = re.sub(r'_+', '_', clean_app).strip('_')
@@ -63,6 +64,13 @@ def resolve_filename_template(template: str, app_name: str, version: str = "", a
     else:
         arch_tag = "universal"
 
+    now = datetime.datetime.now()
+    date_iso = now.strftime("%Y-%m-%d")
+    date_compact = now.strftime("%Y%m%d")
+    year_str = now.strftime("%Y")
+    month_str = now.strftime("%m")
+    day_str = now.strftime("%d")
+
     if not template:
         template = "{appName}_{version}_{arch}_patched.apk"
 
@@ -73,6 +81,12 @@ def resolve_filename_template(template: str, app_name: str, version: str = "", a
     out = out.replace("{version}", clean_ver)
     out = out.replace("{ver}", clean_ver)
     out = out.replace("{arch}", arch_tag)
+    out = out.replace("{date}", date_iso)
+    out = out.replace("{date_compact}", date_compact)
+    out = out.replace("{date_short}", date_compact)
+    out = out.replace("{year}", year_str)
+    out = out.replace("{month}", month_str)
+    out = out.replace("{day}", day_str)
     
     # Clean double underscores and sanitize
     out = re.sub(r'_+', '_', out)

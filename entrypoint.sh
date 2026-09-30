@@ -17,13 +17,13 @@ if ! id -u morphe >/dev/null 2>&1; then
 fi
 
 # Ensure critical directories exist (including morphe data working directories)
-mkdir -p /app/morphe /app/cache/morphe /app/cache/tmp /app/watch /app/output /app/config /app/cache /app/config/keystore /app/config/profiles
+mkdir -p /app/morphe /app/cache/morphe /app/cache/tmp /app/watch /app/output /app/config /app/cache /app/library /app/config/keystore /app/config/profiles
 
 # Fix directory ownership
 chown "$PUID":"$PGID" /app
-chown -R "$PUID":"$PGID" /app/morphe /app/cache /app/watch /app/output /app/config
+chown -R "$PUID":"$PGID" /app/morphe /app/cache /app/watch /app/output /app/config /app/library
 chmod 775 /app
-chmod -R 775 /app/morphe /app/cache /app/watch /app/output /app/config
+chmod -R 775 /app/morphe /app/cache /app/watch /app/output /app/config /app/library
 
 # Auto-download Morphe Desktop JAR if not mounted or cached
 MORPHE_VERSION=${MORPHE_VERSION:-v1.17.0}

@@ -20,13 +20,13 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -r /app/requirements.txt
 
-RUN mkdir -p /app/morphe /app/cache/morphe /app/watch /app/output /app/config /app/cache && chmod -R 777 /app
+RUN mkdir -p /app/morphe /app/cache/morphe /app/watch /app/output /app/config /app/cache /app/library && chmod -R 777 /app
 
 COPY app/ /app/app/
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-VOLUME ["/app/watch", "/app/output", "/app/config", "/app/cache"]
+VOLUME ["/app/watch", "/app/output", "/app/config", "/app/cache", "/app/library"]
 EXPOSE 8080
 
 ENTRYPOINT ["/entrypoint.sh"]

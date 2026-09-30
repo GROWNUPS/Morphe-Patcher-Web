@@ -3,11 +3,34 @@ let uploadedApkData = null;
 let currentJobId = null;
 let eventSource = null;
 let isFilenameManuallyEdited = false;
+let libraryApksCache = [];
+
+function showToast(message, type = "info") {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    document.body.appendChild(container);
+  }
+  const toast = document.createElement("div");
+  toast.className = `toast toast-${type}`;
+  let icon = "ℹ️";
+  if (type === "success") icon = "✅";
+  else if (type === "error") icon = "⚠️";
+  toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = "0";
+    toast.style.transform = "translateY(10px) scale(0.95)";
+    setTimeout(() => toast.remove(), 250);
+  }, 4000);
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   setupThemeToggle();
   setupTabs();
   setupUpload();
+  setupLibrary();
   setupTerminalControls();
   setupOutputs();
   setupSystem();
@@ -16,6 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   
   fetchSystemStatus();
   fetchOutputs();
+  loadApkLibrary();
   fetchPatchSources();
   fetchKeystoreDetails();
   fetchCompatibleVersions();
@@ -83,8 +107,8 @@ function switchTab(tabName) {
     fetchOutputs();
   } else if (tabName === "terminal") {
     refreshTerminalQueue();
-  } else if (tabName === "watcher") {
-    fetchSystemStatus();
+  } else if (tabName === "library") {
+    loadApkLibrary();
   } else if (tabName === "profiles") {
     loadProfilesList();
   } else if (tabName === "system") {
@@ -254,8 +278,29 @@ function setupUpload() {
   // Input Mode Switcher
   const btnModeFile = document.getElementById("input-mode-file");
   const btnModeUrl = document.getElementById("input-mode-url");
+  const btnModeLibrary = document.getElementById("input-mode-library");
   if (btnModeFile) btnModeFile.addEventListener("click", () => setInputMode("file"));
   if (btnModeUrl) btnModeUrl.addEventListener("click", () => setInputMode("url"));
+  if (btnModeLibrary) btnModeLibrary.addEventListener("click", () => setInputMode("library"));
+
+  // Library Select Card controls
+  const btnQuickLoadLibrary = document.getElementById("btn-quick-load-library");
+  if (btnQuickLoadLibrary) {
+    btnQuickLoadLibrary.addEventListener("click", () => {
+      const select = document.getElementById("quick-library-select");
+      const filename = select ? select.value : "";
+      if (!filename) {
+        showToast("Please choose an APK from the library dropdown.", "info");
+        return;
+      }
+      loadLibraryApkForPatching(filename);
+    });
+  }
+
+  const linkGotoLibrary = document.getElementById("link-goto-library");
+  if (linkGotoLibrary) {
+    linkGotoLibrary.addEventListener("click", () => switchTab("library"));
+  }
 
   // URL Download
   const btnFetchUrl = document.getElementById("btn-fetch-url");
@@ -429,23 +474,48 @@ function setupUpload() {
 function setInputMode(mode) {
   const btnFile = document.getElementById("input-mode-file");
   const btnUrl = document.getElementById("input-mode-url");
+  const btnLibrary = document.getElementById("input-mode-library");
   const dropzone = document.getElementById("dropzone");
   const urlCard = document.getElementById("url-download-card");
+  const libCard = document.getElementById("library-select-card");
 
-  if (mode === "url") {
-    btnUrl?.classList.add("active");
-    btnFile?.classList.remove("active");
+  btnFile?.classList.toggle("active", mode === "file");
+  btnUrl?.classList.toggle("active", mode === "url");
+  btnLibrary?.classList.toggle("active", mode === "library");
+
+  if (mode === "library") {
     if (dropzone) dropzone.style.display = "none";
+    if (urlCard) urlCard.style.display = "none";
+    if (libCard) libCard.style.display = "block";
+    populateQuickLibrarySelect();
+  } else if (mode === "url") {
+    if (dropzone) dropzone.style.display = "none";
+    if (libCard) libCard.style.display = "none";
     if (urlCard) {
       urlCard.style.display = "block";
       document.getElementById("apk-url-input")?.focus();
     }
   } else {
-    btnFile?.classList.add("active");
-    btnUrl?.classList.remove("active");
     if (urlCard) urlCard.style.display = "none";
-    if (stagedApks.length === 0) {
-      if (dropzone) dropzone.style.display = "block";
+    if (libCard) libCard.style.display = "none";
+    if (stagedApks.length === 0 && dropzone) {
+      dropzone.style.display = "block";
+    }
+  }
+}
+
+async function checkAndSaveToLibrary(tempPath) {
+  const chk = document.getElementById("chk-save-to-library");
+  if (chk && chk.checked && tempPath) {
+    try {
+      await fetch("/api/library/save-uploaded", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ temp_path: tempPath }),
+      });
+      loadApkLibrary();
+    } catch (e) {
+      console.warn("Auto-save to library failed:", e);
     }
   }
 }
@@ -485,6 +555,7 @@ async function fetchApkFromUrl() {
     const data = await res.json();
     urlInput.value = "";
     addApkToStaging(data);
+    checkAndSaveToLibrary(data.temp_path);
 
   } catch (e) {
     alert(`URL Download Error: ${e.message}`);
@@ -540,6 +611,7 @@ function uploadSingleFile(file) {
     if (xhr.status === 200) {
       const data = JSON.parse(xhr.responseText);
       addApkToStaging(data);
+      checkAndSaveToLibrary(data.temp_path);
     } else {
       alert(`Upload failed: ${xhr.responseText}`);
       resetUploadState();
@@ -589,7 +661,10 @@ function uploadBatchFiles(files) {
     if (xhr.status === 200) {
       const res = JSON.parse(xhr.responseText);
       if (res.results && res.results.length > 0) {
-        res.results.forEach(meta => addApkToStaging(meta, false));
+        res.results.forEach(meta => {
+          addApkToStaging(meta, false);
+          checkAndSaveToLibrary(meta.temp_path);
+        });
         showBatchCard();
       }
       if (res.errors && res.errors.length > 0) {
@@ -960,7 +1035,21 @@ function resetUploadState() {
   stagedApks = [];
   uploadedApkData = null;
   isFilenameManuallyEdited = false;
-  document.getElementById("dropzone").style.display = "block";
+
+  const dropzone = document.getElementById("dropzone");
+  const urlCard = document.getElementById("url-download-card");
+  const libCard = document.getElementById("library-select-card");
+  if (urlCard) urlCard.style.display = "none";
+  if (libCard) libCard.style.display = "none";
+  if (dropzone) dropzone.style.display = "block";
+
+  const btnFile = document.getElementById("input-mode-file");
+  const btnUrl = document.getElementById("input-mode-url");
+  const btnLib = document.getElementById("input-mode-library");
+  btnFile?.classList.add("active");
+  btnUrl?.classList.remove("active");
+  btnLib?.classList.remove("active");
+
   document.getElementById("upload-progress-container").style.display = "none";
   document.getElementById("app-card").style.display = "none";
   document.getElementById("patch-options-area").style.display = "none";
@@ -1523,6 +1612,25 @@ function setupSystem() {
       }
     });
   }
+
+  // 6. Hot-Folder Watcher Toggle
+  const btnToggleWatcher = document.getElementById("btn-toggle-watcher");
+  if (btnToggleWatcher) {
+    btnToggleWatcher.addEventListener("click", async () => {
+      btnToggleWatcher.disabled = true;
+      try {
+        const res = await fetch("/api/system/watcher/toggle", { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Failed to toggle watcher");
+        showToast(data.message, data.enabled ? "success" : "info");
+        await fetchSystemStatus();
+      } catch (e) {
+        alert(`Failed to toggle watcher: ${e.message}`);
+      } finally {
+        btnToggleWatcher.disabled = false;
+      }
+    });
+  }
 }
 
 async function fetchKeystoreDetails() {
@@ -1672,8 +1780,37 @@ async function fetchSystemStatus() {
     document.getElementById("mpp-status").style.color = data.patches_bundle.exists ? "var(--accent)" : "var(--danger)";
 
     const w = data.watcher;
-    document.getElementById("watcher-dir-text").textContent = w.watch_dir;
-    document.getElementById("watcher-status-text").textContent = w.enabled ? "Active & Monitoring" : "Disabled";
+    if (w) {
+      const watcherDirEl = document.getElementById("watcher-dir-text");
+      const watcherStatusEl = document.getElementById("watcher-status-text");
+      const watcherBadge = document.getElementById("watcher-badge");
+      const btnToggleWatcher = document.getElementById("btn-toggle-watcher");
+
+      if (watcherDirEl) watcherDirEl.textContent = w.watch_dir;
+      if (watcherStatusEl) watcherStatusEl.textContent = w.enabled ? "Active & Monitoring" : "Disabled";
+
+      if (watcherBadge) {
+        if (w.enabled) {
+          watcherBadge.textContent = "Active & Monitoring";
+          watcherBadge.style.background = "rgba(16, 185, 129, 0.2)";
+          watcherBadge.style.color = "#34d399";
+        } else {
+          watcherBadge.textContent = "Disabled";
+          watcherBadge.style.background = "rgba(156, 163, 175, 0.2)";
+          watcherBadge.style.color = "var(--text-muted)";
+        }
+      }
+
+      if (btnToggleWatcher) {
+        if (w.enabled) {
+          btnToggleWatcher.textContent = "🛑 Turn OFF Watcher";
+          btnToggleWatcher.className = "btn btn-danger";
+        } else {
+          btnToggleWatcher.textContent = "⚡ Turn ON Watcher";
+          btnToggleWatcher.className = "btn btn-secondary";
+        }
+      }
+    }
 
     const profileSelect = document.getElementById("patch-profile");
     if (profileSelect && !uploadedApkData && data.profile_details) {
@@ -2240,6 +2377,260 @@ async function handleDeleteProfile(profileId) {
     }
   } catch (err) {
     alert("Error: " + err.message);
+  }
+}
+
+// -------------------------------------------------------------
+// BASE APK LIBRARY SYSTEM
+// -------------------------------------------------------------
+
+function setupLibrary() {
+  const btnUpload = document.getElementById("btn-upload-to-library");
+  const fileInput = document.getElementById("library-file-input");
+  const btnRefresh = document.getElementById("btn-refresh-library");
+  const searchInput = document.getElementById("library-search-input");
+
+  if (btnUpload && fileInput) {
+    btnUpload.addEventListener("click", () => fileInput.click());
+    fileInput.addEventListener("change", async (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        await handleLibraryUpload(e.target.files[0]);
+        fileInput.value = "";
+      }
+    });
+  }
+
+  if (btnRefresh) {
+    btnRefresh.addEventListener("click", () => {
+      loadApkLibrary();
+      showToast("Base APK library refreshed.", "info");
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener("input", (e) => {
+      renderLibraryGrid(e.target.value.trim());
+    });
+  }
+}
+
+async function handleLibraryUpload(file) {
+  if (!file.name.toLowerCase().endsWith(".apk")) {
+    alert("Please select a valid Android .apk file.");
+    return;
+  }
+
+  const btnUpload = document.getElementById("btn-upload-to-library");
+  const originalHtml = btnUpload ? btnUpload.innerHTML : "";
+  if (btnUpload) {
+    btnUpload.disabled = true;
+    btnUpload.innerHTML = `<span>⏳ Uploading...</span>`;
+  }
+  showToast(`Uploading ${file.name} to server library...`, "info");
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/library/upload", {
+      method: "POST",
+      body: formData,
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.detail || "Upload to library failed");
+    }
+    showToast(`Added ${data.app_name || file.name} to Base APK Library!`, "success");
+    await loadApkLibrary();
+  } catch (err) {
+    console.error("Library upload error:", err);
+    alert(`Library Upload Error: ${err.message}`);
+  } finally {
+    if (btnUpload) {
+      btnUpload.disabled = false;
+      btnUpload.innerHTML = originalHtml;
+    }
+  }
+}
+
+async function loadApkLibrary() {
+  try {
+    const res = await fetch("/api/library");
+    if (!res.ok) return;
+    const data = await res.json();
+
+    libraryApksCache = data.apks || [];
+
+    const badge = document.getElementById("library-storage-badge");
+    const countEl = document.getElementById("library-count");
+
+    if (badge) {
+      badge.textContent = `${data.count} APKs • ${data.total_size_human}`;
+    }
+    if (countEl) {
+      countEl.textContent = `${data.count}`;
+    }
+
+    populateQuickLibrarySelect();
+    const searchVal = document.getElementById("library-search-input")?.value.trim() || "";
+    renderLibraryGrid(searchVal);
+  } catch (e) {
+    console.error("Failed to load APK library:", e);
+  }
+}
+
+function populateQuickLibrarySelect() {
+  const select = document.getElementById("quick-library-select");
+  if (!select) return;
+
+  const currentVal = select.value;
+  select.innerHTML = `<option value="">Choose a stored APK from library (${libraryApksCache.length} available)...</option>`;
+
+  libraryApksCache.forEach(apk => {
+    const opt = document.createElement("option");
+    opt.value = apk.file_name;
+    const name = apk.app_name || apk.file_name;
+    const ver = apk.version_name ? ` v${apk.version_name}` : "";
+    opt.textContent = `${name}${ver} (${apk.file_size_human})`;
+    if (apk.file_name === currentVal) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function renderLibraryGrid(filter = "") {
+  const container = document.getElementById("library-grid");
+  if (!container) return;
+
+  let filtered = libraryApksCache;
+  if (filter) {
+    const q = filter.toLowerCase();
+    filtered = libraryApksCache.filter(item =>
+      (item.app_name && item.app_name.toLowerCase().includes(q)) ||
+      (item.package_name && item.package_name.toLowerCase().includes(q)) ||
+      (item.file_name && item.file_name.toLowerCase().includes(q))
+    );
+  }
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); background: var(--bg-card); border: 1px dashed var(--border); border-radius: 14px;">
+        <div style="font-size: 3rem; margin-bottom: 0.75rem;">📦</div>
+        <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+          ${filter ? "No Matching APKs Found" : "No Base APKs in Library Yet"}
+        </div>
+        <p style="font-size: 0.85rem; max-width: 480px; margin: 0.5rem auto 1.25rem; line-height: 1.5;">
+          ${filter ? `No saved APK matches "${escapeHtml(filter)}". Try another search query.` : 'Upload Android base APKs directly here or keep "Save copy to Base APK Library" enabled on Dashboard to reuse APKs without re-uploading every time.'}
+        </p>
+        ${!filter ? `
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('library-file-input').click()" style="padding: 0.55rem 1.25rem;">
+            📤 Upload Your First Base APK
+          </button>
+        ` : ''}
+      </div>
+    `;
+    return;
+  }
+
+  const defaultSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2'%3E%3Crect x='4' y='4' width='16' height='16' rx='2'/%3E%3Cpath d='M9 9h6v6H9z'/%3E%3C/svg%3E";
+
+  container.innerHTML = filtered.map(apk => {
+    let compatTag = "";
+    if (apk.compatibility && apk.compatibility.status) {
+      if (apk.compatibility.status === "RECOMMENDED") {
+        compatTag = `<span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399;">✓ Recommended</span>`;
+      } else if (apk.compatibility.status === "COMPATIBLE") {
+        compatTag = `<span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">ℹ️ Compatible</span>`;
+      } else if (apk.compatibility.status === "EXPERIMENTAL") {
+        compatTag = `<span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24;">⚠️ Experimental</span>`;
+      } else if (apk.compatibility.status === "UNTESTED") {
+        compatTag = `<span class="badge" style="background: rgba(156, 163, 175, 0.2); color: var(--text-muted);">Untested</span>`;
+      }
+    }
+
+    const modifiedDate = apk.modified_time
+      ? new Date(apk.modified_time * 1000).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+      : "";
+
+    return `
+      <div class="library-card">
+        <div>
+          <div class="library-card-header">
+            <img class="library-card-icon" src="${apk.icon_base64 || defaultSvg}" alt="App Icon">
+            <div style="flex: 1; min-width: 0;">
+              <div class="library-card-title">${escapeHtml(apk.app_name || apk.file_name)}</div>
+              <div class="library-card-pkg">${escapeHtml(apk.package_name || apk.file_name)}</div>
+            </div>
+          </div>
+          <div class="library-card-badges">
+            <span class="badge" style="background: var(--bg-subtle); color: var(--text-main); font-weight: 600;">v${escapeHtml(apk.version_name || '?')}</span>
+            <span class="badge">${escapeHtml(apk.file_size_human || '')}</span>
+            ${compatTag}
+            ${modifiedDate ? `<span class="badge" style="color: var(--text-muted); font-size: 0.75rem;">📅 ${modifiedDate}</span>` : ''}
+          </div>
+        </div>
+        <div class="library-card-actions">
+          <button type="button" class="btn btn-primary btn-patch-library-item" data-filename="${escapeHtml(apk.file_name)}" style="flex: 1; padding: 0.45rem 0.85rem; font-size: 0.85rem; display: flex; align-items: center; justify-content: center; gap: 0.35rem;">
+            <span>⚡</span>
+            <span>Patch This APK</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-del-library-item" data-filename="${escapeHtml(apk.file_name)}" title="Delete from server library" style="padding: 0.45rem 0.75rem; font-size: 0.85rem;">
+            🗑️
+          </button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  container.querySelectorAll(".btn-patch-library-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const fn = btn.dataset.filename;
+      loadLibraryApkForPatching(fn);
+    });
+  });
+
+  container.querySelectorAll(".btn-del-library-item").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const fn = btn.dataset.filename;
+      deleteLibraryApk(fn);
+    });
+  });
+}
+
+async function loadLibraryApkForPatching(filename) {
+  let item = libraryApksCache.find(a => a.file_name === filename);
+  if (!item) {
+    try {
+      const res = await fetch(`/api/library/${encodeURIComponent(filename)}`);
+      if (res.ok) item = await res.json();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  if (!item) {
+    alert(`Could not find APK "${filename}" in library.`);
+    return;
+  }
+
+  resetUploadState();
+  addApkToStaging(item);
+  switchTab("patcher");
+  showToast(`Loaded ${item.app_name || item.file_name} from Base APK Library!`, "success");
+}
+
+async function deleteLibraryApk(filename) {
+  if (!confirm(`Are you sure you want to delete "${filename}" from the server Base APK Library?\nThis will remove the file from storage.`)) {
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/library/${encodeURIComponent(filename)}`, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Delete failed");
+    showToast(`Removed "${filename}" from Base APK Library.`, "info");
+    await loadApkLibrary();
+  } catch (err) {
+    alert(`Error deleting APK: ${err.message}`);
   }
 }
 

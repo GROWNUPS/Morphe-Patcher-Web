@@ -104,16 +104,23 @@ flowchart LR
 - **Per-App & Universal Presets**: Create reusable presets customized for specific packages (e.g. YouTube, YouTube Music, Reddit) or universal presets that apply across all apps.
 - **Independent App Name & App Icon Customization**: Configure your App Name Rule and App Icon Preference separately. Combine custom name templates (e.g. `{appName} Morphe`) with your choice of icon styles—including **Original Stock Icon** (keeps classic unpatched stock launcher and notification icons, e.g. red YouTube) or Morphe Black, Dark, Light, and Play styles.
 - **Dynamic Template Engine (`{appName} Morphe`)**: Configure custom branding templates using `{appName}` (or `{app_name}`). Patchium automatically resolves the detected app title (e.g. *YouTube* $\rightarrow$ **"YouTube Morphe"**, *YouTube Music* $\rightarrow$ **"YouTube Music Morphe"**)—no more tedious manual typing for every build.
-- **Custom Output Filename Templates**: Define flexible output patterns with dynamic placeholder chips (`{appName}`, `{version}`, `{arch}`) for clean, predictable naming across your entire library.
-- **Context-Aware Smart Filtering**: When an APK is uploaded, the dashboard automatically filters available presets to match that specific app and pre-selects your designated default preset.
+- **Custom Output Filename Templates & Date Placeholders**: Define flexible output patterns with dynamic placeholder chips: `{appName}`, `{version}`, `{arch}`, `{date}` (`YYYY-MM-DD`), and `{date_compact}` (`YYYYMMDD`) for clean, versioned, predictable naming across your entire library.
+- **Context-Aware Smart Filtering**: When an APK is uploaded or loaded from the library, the dashboard automatically filters available presets to match that specific app and pre-selects your designated default preset.
 - **Streamlined Inspect Screen**: Replaced clutter with a primary Preset Selector, active configuration summary chip, and a collapsible **"⚙️ Advanced Options & Overrides"** accordion for occasional one-off tweaks.
 - **1-Click Preset Creator**: Jump directly from the inspect screen into the profile creator with the uploaded APK's package name and detected app title pre-filled.
-- **Deep Hot-Folder Daemon Integration**: The `./watch` daemon automatically identifies default profiles matching incoming APK packages and applies their custom branding, icon styles, architecture, and output filename templates autonomously.
+- **Deep Automation Integration**: Both web patching and the background daemon automatically identify default profiles matching incoming APK packages and apply their custom branding, icon styles, architecture, and output filename templates autonomously.
 
-### 📥 Flexible APK Import
+### 📦 Persistent Base APK Library
+- **Server-Side Base APK Storage**: Keep a permanent collection of base APKs directly on your server in `./library`.
+- **1-Click Instant Patching**: Select any APK from your library and click **"⚡ Patch This APK"** to immediately inspect and patch it without re-uploading large APK files across your network.
+- **Automatic Staging**: Enable the "Save copy to Base APK Library" toggle when uploading via browser or downloading from direct URLs to build your library effortlessly.
+- **Dedicated Library Manager**: Browse, search, filter, and inspect stored APKs with app icons, versions, file sizes, and compatibility badges.
+
+### 📥 Flexible APK Ingestion
+- **Persistent Base APK Library**: Patch directly from your server's saved collection without re-uploading.
 - **Drag & Drop Upload**: Upload APKs directly from your browser.
 - **Download via URL**: Paste any direct APK download link or mirror URL to download and inspect APKs directly on the server.
-- **Hot-Folder Watcher (`./watch`)**: Drop APKs over SMB/NFS/Nextcloud; the watcher detects transfer completion, matches the app package, and patches automatically.
+- **Hot-Folder Daemon (`./watch`)**: Drop APKs over SMB/NFS/Nextcloud; the watcher detects transfer completion, matches the app package, and patches automatically. Easily toggled ON or OFF in Settings (disabled by default for low resource footprint).
 
 ### 📦 Multi-APK Batch Processing Queue
 - Stage and configure multiple APKs at once.
@@ -129,6 +136,10 @@ flowchart LR
 ### 🔑 Persistent & Custom Keystore
 - Generates a persistent signing keystore on first run so updates install seamlessly on your phone without signature mismatch errors.
 - Support for importing custom keystores (`.keystore`, `.jks`, `.p12`) directly via the Web UI or `./config/keystore/`.
+
+### 📁 Hot-Folder Auto-Watcher Toggle in Settings
+- Relocated directly into **Settings** with an on-demand live toggle button.
+- Disabled by default (`AUTO_WATCH=false`) so your server remains completely idle unless folder monitoring is specifically needed.
 
 ### 🛡️ NAS-Friendly Permissions
 - Configurable `PUID` and `PGID` ensures output files are immediately readable and writable by your host user without permission conflicts on Synology, Unraid, and Linux servers.
@@ -165,12 +176,13 @@ services:
       - PGID=${PGID:-1000}
       - TZ=${TZ:-Etc/UTC}
       - JAVA_OPTS=${JAVA_OPTS:--Xms256m -Xmx2048m -XX:+UseContainerSupport}
-      - AUTO_WATCH=${AUTO_WATCH:-true}
+      - AUTO_WATCH=${AUTO_WATCH:-false}
       - WATCH_DEBOUNCE_SECONDS=${WATCH_DEBOUNCE_SECONDS:-5}
       - WATCH_ACTION_AFTER_PATCH=${WATCH_ACTION_AFTER_PATCH:-archive}
       - AUTO_UPDATE_PATCHES=${AUTO_UPDATE_PATCHES:-true}
       - WEBHOOK_URL=${WEBHOOK_URL:-}
     volumes:
+      - ./library:/app/library
       - ./watch:/app/watch
       - ./output:/app/output
       - ./config:/app/config
@@ -185,8 +197,8 @@ PUID=1000
 PGID=1000
 TZ=Etc/UTC
 
-# Hot-Folder Watcher
-AUTO_WATCH=true
+# Hot-Folder Watcher (Disabled by default, toggleable live in Settings)
+AUTO_WATCH=false
 WATCH_DEBOUNCE_SECONDS=5
 WATCH_ACTION_AFTER_PATCH=archive
 
@@ -223,11 +235,12 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
-      - AUTO_WATCH=true
+      - AUTO_WATCH=false
       - AUTO_UPDATE_PATCHES=true
       - WATCH_ACTION_AFTER_PATCH=archive
       # - WEBHOOK_URL=https://discord.com/api/webhooks/...
     volumes:
+      - ./library:/app/library
       - ./watch:/app/watch
       - ./output:/app/output
       - ./config:/app/config
@@ -250,6 +263,7 @@ Run standalone directly from your terminal:
 docker run -d \
   --name patchium \
   -p 8080:8080 \
+  -v ./library:/app/library \
   -v ./watch:/app/watch \
   -v ./output:/app/output \
   -v ./config:/app/config \
@@ -291,7 +305,8 @@ http://<your-server-ip>:8080
 
 | Host Directory | Container Path | Description |
 | :--- | :--- | :--- |
-| `./watch` | `/app/watch` | **Hot Folder**: Drop unpatched APKs here to trigger automatic patching. |
+| `./library` | `/app/library` | **Base APK Library**: Persistent storage for original, unpatched APKs for instant 1-click patching. |
+| `./watch` | `/app/watch` | **Hot Folder**: Drop unpatched APKs here to trigger automatic patching (if enabled). |
 | `./output` | `/app/output` | **Destination**: Completed patched APKs are placed here. |
 | `./config` | `/app/config` | **Persistence**: Stores the signing keystore, custom patch profiles, and `.mpp` patch bundles. |
 | `./cache` | `/app/cache` | Temporary workspace for APK decompilation and rebuilding. |
@@ -308,7 +323,7 @@ http://<your-server-ip>:8080
 | `TZ` | `Etc/UTC` | Container timezone. |
 | `JAVA_OPTS` | `-Xms256m -Xmx2048m -XX:+UseContainerSupport` | JVM memory limits for Morphe CLI execution. |
 | `AUTO_UPDATE_PATCHES` | `true` | Automatically check GitHub for newer Morphe patch bundles on startup. |
-| `AUTO_WATCH` | `true` | Enables/disables the background hot-folder daemon. |
+| `AUTO_WATCH` | `false` | Enables/disables the background hot-folder daemon. Toggleable live in Settings. |
 | `WATCH_DEBOUNCE_SECONDS` | `5` | Seconds file size must stay stable before starting auto-patch. |
 | `WATCH_ACTION_AFTER_PATCH`| `archive` | Action on source APK: `archive` (moves to `watch/processed`), `delete`, or `keep`. |
 | `WEBHOOK_URL` | `""` | Optional webhook endpoint (Discord, ntfy.sh, Gotify) for completion alerts. |

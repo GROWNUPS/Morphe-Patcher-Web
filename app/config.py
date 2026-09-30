@@ -8,6 +8,7 @@ WATCH_DIR = Path(os.getenv("WATCH_DIR", "/app/watch" if os.path.exists("/app") e
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/app/output" if os.path.exists("/app") else str(BASE_DIR / "output")))
 CONFIG_DIR = Path(os.getenv("CONFIG_DIR", "/app/config" if os.path.exists("/app") else str(BASE_DIR / "config")))
 CACHE_DIR = Path(os.getenv("CACHE_DIR", "/app/cache" if os.path.exists("/app") else str(BASE_DIR / "cache")))
+LIBRARY_DIR = Path(os.getenv("LIBRARY_DIR", "/app/library" if os.path.exists("/app") else str(BASE_DIR / "library")))
 MORPHE_DATA_DIR = Path(os.getenv("MORPHE_DATA_DIR", str(CACHE_DIR / "morphe")))
 
 KEYSTORE_DIR = CONFIG_DIR / "keystore"
@@ -16,7 +17,7 @@ PATCHES_DIR = CONFIG_DIR / "patches"
 KEYSTORE_CONFIG_FILE = KEYSTORE_DIR / "keystore_config.json"
 
 # Ensure directories exist
-for directory in [WATCH_DIR, OUTPUT_DIR, CONFIG_DIR, CACHE_DIR, MORPHE_DATA_DIR, KEYSTORE_DIR, PROFILES_DIR, PATCHES_DIR]:
+for directory in [WATCH_DIR, OUTPUT_DIR, CONFIG_DIR, CACHE_DIR, LIBRARY_DIR, MORPHE_DATA_DIR, KEYSTORE_DIR, PROFILES_DIR, PATCHES_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
 
 os.environ["MORPHE_DATA_DIR"] = str(MORPHE_DATA_DIR)
@@ -55,8 +56,8 @@ JAVA_OPTS = os.getenv("JAVA_OPTS", "-Xms256m -Xmx2048m -XX:+UseContainerSupport"
 PORT = int(os.getenv("PORT", "8080"))
 HOST = os.getenv("HOST", "0.0.0.0")
 
-# Hot-Folder Watcher settings
-AUTO_WATCH = os.getenv("AUTO_WATCH", "true").lower() in ("true", "1", "yes")
+# Hot-Folder Watcher settings (Disabled by default, toggleable via Settings)
+AUTO_WATCH = os.getenv("AUTO_WATCH", "false").lower() in ("true", "1", "yes")
 WATCH_DEBOUNCE_SECONDS = int(os.getenv("WATCH_DEBOUNCE_SECONDS", "5"))
 WATCH_ACTION_AFTER_PATCH = os.getenv("WATCH_ACTION_AFTER_PATCH", "archive")  # 'archive', 'delete', 'keep'
 
