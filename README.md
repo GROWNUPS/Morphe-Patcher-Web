@@ -32,7 +32,7 @@
 | 3. Preset Profiles | 4. Output APK Page |
 | :---: | :---: |
 | ![Preset Profiles](docs/screenshots/03-preset-profiles.png) | ![Output APK Page](docs/screenshots/04-output-apk.png) |
-| *Configure per-app custom naming, output filename templates and more* | *Completed APK library, one-click downloads* |
+| *Configure per-app custom name, icon, output filename templates and more* | *Completed APK library, one-click downloads* |
 
 | 5. Hot Folder Watcher | 6. Settings Page — Keystore & Patches |
 | :---: | :---: |
