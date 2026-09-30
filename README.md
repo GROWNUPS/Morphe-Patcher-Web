@@ -14,8 +14,8 @@
   <img src="https://img.shields.io/badge/License-GPLv3-green" alt="License">
 </p>
 
-> ⚠️ **Disclaimer & Compliance:**  
-> This project is strictly an open-source Web GUI wrapper around the official Morphe CLI. It **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware (BYOA — Bring Your Own APK).
+> ⚠️ **Disclaimer:**  
+> This project is strictly an open-source Web GUI wrapper around the official Morphe CLI. It **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware.
 
 <p align="center"><sub><i>🤖 This project was built with AI assistance and is intended for personal use. It may contain bugs or rough edges. Review the code and use it at your own risk, especially before exposing it beyond your local network 🤖</i></sub></p>
 
