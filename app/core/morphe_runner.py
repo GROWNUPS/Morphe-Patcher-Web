@@ -3,6 +3,7 @@ import os
 import re
 import shlex
 import logging
+import shutil
 from pathlib import Path
 from typing import AsyncGenerator, Callable, Optional, Dict, Any, List
 
@@ -16,6 +17,22 @@ from app.config import (
 from app.core.keystore import get_keystore_cli_args
 
 logger = logging.getLogger("morphe.runner")
+
+def cleanup_temp_dir():
+    """Safely cleans up orphaned temporary working files extracted by Morphe."""
+    temp_dir = CACHE_DIR / "tmp"
+    if temp_dir.exists():
+        try:
+            for item in temp_dir.iterdir():
+                try:
+                    if item.is_file() or item.is_symlink():
+                        item.unlink(missing_ok=True)
+                    elif item.is_dir():
+                        shutil.rmtree(item, ignore_errors=True)
+                except Exception as e:
+                    logger.debug(f"Failed to clean temp item {item}: {e}")
+        except Exception as e:
+            logger.debug(f"Failed to read temp dir: {e}")
 
 PHASE_PATTERNS = [
     (re.compile(r"(reading|loading)\s+(apk|dex)", re.IGNORECASE), "READING_APK", 15),
@@ -200,6 +217,7 @@ class MorpheRunner:
             return {"success": False, "returncode": -1, "error": str(e)}
         finally:
             self.current_process = None
+            cleanup_temp_dir()
 
     def cancel(self):
         self._canceled = True

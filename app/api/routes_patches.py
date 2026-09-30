@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.config import PATCHES_FILE, PATCHES_DIR
+from app.core.apk_inspector import format_file_size
 
 logger = logging.getLogger("morphe.api.patches")
 router = APIRouter(prefix="/api/patches", tags=["Patches"])
@@ -15,13 +16,7 @@ class DownloadUrlRequest(BaseModel):
     url: str
     filename: Optional[str] = None
 
-def _format_size(size_bytes: int) -> str:
-    if size_bytes < 1024:
-        return f"{size_bytes} B"
-    elif size_bytes < 1024 * 1024:
-        return f"{size_bytes / 1024:.1f} KB"
-    else:
-        return f"{size_bytes / (1024 * 1024):.1f} MB"
+_format_size = format_file_size
 
 @router.get("/sources")
 async def list_patch_sources():

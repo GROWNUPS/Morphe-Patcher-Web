@@ -123,6 +123,8 @@ def inspect_keystore(keystore_path: Path, storepass: str, alias: Optional[str] =
         "size_bytes": keystore_path.stat().st_size,
     }
 
+_KEYSTORE_CACHE: Dict[str, Any] = {}
+
 def set_custom_keystore(
     keystore_path: Path,
     storepass: str,
@@ -146,6 +148,7 @@ def set_custom_keystore(
     with open(KEYSTORE_CONFIG_FILE, "w") as f:
         json.dump(cfg, f, indent=2)
 
+    _KEYSTORE_CACHE.clear()
     logger.info(f"Custom keystore activated: {keystore_path.name} (alias: {chosen_alias})")
     info["is_custom"] = True
     return info
@@ -157,6 +160,7 @@ def reset_default_keystore() -> Dict[str, Any]:
         except Exception as e:
             logger.warning(f"Error removing keystore config: {e}")
 
+    _KEYSTORE_CACHE.clear()
     ensure_keystore()
     return get_keystore_info()
 
@@ -187,7 +191,14 @@ def get_keystore_info() -> Dict[str, Any]:
 
     if exists:
         try:
-            inspected = inspect_keystore(p, cfg["password"], cfg["alias"])
+            cache_key = f"{p}:{p.stat().st_mtime_ns}:{cfg['alias']}:{cfg['password']}"
+            if cache_key in _KEYSTORE_CACHE:
+                inspected = _KEYSTORE_CACHE[cache_key]
+            else:
+                inspected = inspect_keystore(p, cfg["password"], cfg["alias"])
+                _KEYSTORE_CACHE.clear()
+                _KEYSTORE_CACHE[cache_key] = inspected
+
             details.update({
                 "sha256": inspected.get("sha256"),
                 "sha1": inspected.get("sha1"),

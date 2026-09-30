@@ -5,6 +5,7 @@
 cache/
 output/
 watch/
+library/
 config/
 __pycache__/
 *.pyc

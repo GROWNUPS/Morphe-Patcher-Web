@@ -65,6 +65,8 @@ class Job:
     def add_log(self, line: str, progress: Optional[int] = None, phase: Optional[str] = None):
         timestamp = datetime.now().strftime("%H:%M:%S")
         entry = f"[{timestamp}] {line}"
+        if len(self.logs) >= 2000:
+            self.logs.pop(0)
         self.logs.append(entry)
 
         if progress is not None:
@@ -112,12 +114,24 @@ class QueueManager:
         self.runner = MorpheRunner()
         self._worker_task: Optional[asyncio.Task] = None
 
+    def _prune_history(self, max_history: int = 100):
+        if len(self.jobs) > max_history:
+            finished_keys = [
+                jid for jid, j in self.jobs.items()
+                if j.status in ("COMPLETED", "FAILED", "CANCELED")
+                and (not self.current_job or self.current_job.id != jid)
+            ]
+            to_remove = len(self.jobs) - max_history
+            for jid in finished_keys[:to_remove]:
+                del self.jobs[jid]
+
     def start(self):
         if not self._worker_task:
             self._worker_task = asyncio.create_task(self._worker_loop())
             logger.info("Morphe Job Queue Worker started.")
 
     async def submit_job(self, job: Job) -> Job:
+        self._prune_history()
         self.jobs[job.id] = job
         await self.queue.put(job)
         job.add_log(f"Job queued (Position #{self.queue.qsize()})", 0, "QUEUED")

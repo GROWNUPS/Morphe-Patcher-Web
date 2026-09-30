@@ -1442,7 +1442,7 @@ function renderOutputsTable(files) {
 
 function setupSystem() {
   // 1. Official patches update button
-  const btnUpdatePatches = document.getElementById("btn-update-patches");
+  const btnUpdatePatches = document.getElementById("btn-settings-update-patches");
   if (btnUpdatePatches) {
     btnUpdatePatches.addEventListener("click", async () => {
       btnUpdatePatches.textContent = "Updating...";
@@ -1768,17 +1768,6 @@ async function fetchSystemStatus() {
       headerQueue.style.color = "var(--text-muted)";
     }
 
-    const ks = data.keystore;
-    document.getElementById("keystore-status").textContent = ks.exists ? "Active (Valid)" : "Not Found";
-    document.getElementById("keystore-status").style.color = ks.exists ? "var(--accent)" : "var(--danger)";
-    document.getElementById("keystore-alias").textContent = ks.alias || "morphe";
-    document.getElementById("keystore-path").textContent = ks.path;
-
-    document.getElementById("jar-status").textContent = data.morphe_jar.exists ? "Ready (Installed)" : "Missing";
-    document.getElementById("jar-status").style.color = data.morphe_jar.exists ? "var(--accent)" : "var(--danger)";
-    document.getElementById("mpp-status").textContent = data.patches_bundle.exists ? "Ready (Installed)" : "Missing";
-    document.getElementById("mpp-status").style.color = data.patches_bundle.exists ? "var(--accent)" : "var(--danger)";
-
     const w = data.watcher;
     if (w) {
       const watcherDirEl = document.getElementById("watcher-dir-text");
@@ -1810,6 +1799,19 @@ async function fetchSystemStatus() {
           btnToggleWatcher.className = "btn btn-secondary";
         }
       }
+
+      const pendingEl = document.getElementById("watcher-pending-list");
+      if (pendingEl) {
+        if (w.pending_files && w.pending_files.length > 0) {
+          pendingEl.innerHTML = w.pending_files.map(f => `<div>⏳ Stabilizing file: <strong>${escapeHtml(f)}</strong></div>`).join("");
+          pendingEl.style.color = "var(--warning)";
+        } else {
+          pendingEl.textContent = "No files currently stabilizing or transferring.";
+          pendingEl.style.color = "var(--text-muted)";
+        }
+      }
+
+      renderWatcherEvents(w.recent_events || []);
     }
 
     const profileSelect = document.getElementById("patch-profile");
@@ -1824,17 +1826,6 @@ async function fetchSystemStatus() {
         profileSelect.appendChild(opt);
       });
     }
-
-    const pendingEl = document.getElementById("watcher-pending-list");
-    if (w.pending_files && w.pending_files.length > 0) {
-      pendingEl.innerHTML = w.pending_files.map(f => `<div>⏳ Stabilizing file: <strong>${escapeHtml(f)}</strong></div>`).join("");
-      pendingEl.style.color = "var(--warning)";
-    } else {
-      pendingEl.textContent = "No files currently stabilizing or transferring.";
-      pendingEl.style.color = "var(--text-muted)";
-    }
-
-    renderWatcherEvents(w.recent_events || []);
 
   } catch (e) {
     console.error("Failed to fetch system status:", e);

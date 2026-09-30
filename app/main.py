@@ -15,6 +15,7 @@ from app.config import (
     CACHE_DIR,
 )
 from app.core.keystore import ensure_keystore
+from app.core.morphe_runner import cleanup_temp_dir
 from app.core.downloader import ensure_binaries
 from app.core.queue_manager import queue_manager
 from app.core.watcher import hot_folder_watcher
@@ -38,6 +39,7 @@ logger = logging.getLogger("patchium.main")
 async def lifespan(app: FastAPI):
     logger.info("Initializing Patchium Web Service...")
 
+    cleanup_temp_dir()
     ensure_keystore()
     queue_manager.start()
 

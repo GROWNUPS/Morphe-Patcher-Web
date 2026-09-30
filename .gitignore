@@ -37,6 +37,8 @@ watch/*
 !watch/processed/
 watch/processed/*
 !watch/processed/.gitkeep
+library/*
+!library/.gitkeep
 
 # Persistent keystores and local secrets
 config/keystore/*.keystore
