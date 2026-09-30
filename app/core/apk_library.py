@@ -107,7 +107,7 @@ def save_to_library(source_path: Path, custom_filename: Optional[str] = None) ->
 
     pkg = meta.get("package_name")
     ver = meta.get("version_name")
-    compat_info = check_version_compatibility(pkg, ver) if pkg and ver else None
+    compat_info = check_apk_compatibility(pkg, ver) if pkg and ver else None
 
     stat = dest_path.stat()
     item = {
