@@ -57,7 +57,7 @@ Patching Android applications using patchers like Morphe have some friction :
 - **100% Headless & Containerized**: Runs in lightweight Docker containers across x86_64 and ARM64 (Raspberry Pi, mini PCs, NAS devices). No GUI or display server required.
 - **Zero Guesswork Target Guidance**: Inspects the patch bundle dynamically via Morphe CLI to show you exact recommended APK versions, and provides 1-click direct search links to APKMirror.
 - **Automated Hot-Folder (`./watch`)**: Drop APKs over SMB, NFS, or Nextcloud; the daemon automatically detects them, matches the target package, applies the patches, and moves them to `./output`.
-- **Instant Phone Delivery via QR Code**: Once patched, scan the on-screen QR code with your Android camera to download and install the finished APK straight over your local Wi-Fi.
+- **Instant Direct Downloads & Webhooks**: Download finished APKs with 1-click or copy download links, with automated completion alerts sent via Discord, ntfy.sh, or Gotify.
 - **Consistent Signatures**: Creates and persists an Android keystore across builds so app updates can be installed without signature mismatch warnings or having to uninstall previous builds.
 
 ```mermaid
@@ -66,7 +66,7 @@ flowchart LR
     B --> C[Morphe CLI Engine<br/>Decompile • Patch • Striplibs • Sign]
     C --> D[Live SSE Logs<br/>Color Terminal in Browser]
     C --> E[Finished APK Storage<br/>./output & Webhooks]
-    E --> F[Direct Mobile Install<br/>Scan On-Screen QR Code]
+    E --> F[Direct Web Download<br/>& Instant Alerts]
 ```
 
 ---

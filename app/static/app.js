@@ -2,7 +2,6 @@ let stagedApks = [];
 let uploadedApkData = null;
 let currentJobId = null;
 let eventSource = null;
-let qrCodeInstance = null;
 let isFilenameManuallyEdited = false;
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1237,13 +1236,6 @@ function setupTerminalControls() {
 
 function setupOutputs() {
   document.getElementById("btn-refresh-outputs").addEventListener("click", fetchOutputs);
-  document.getElementById("btn-close-qr").addEventListener("click", () => {
-    document.getElementById("qr-modal").classList.remove("active");
-  });
-  document.getElementById("btn-copy-qr-link").addEventListener("click", () => {
-    const url = document.getElementById("qr-url-text").textContent;
-    navigator.clipboard.writeText(url).then(() => alert("Download link copied!"));
-  });
 }
 
 async function fetchOutputs() {
@@ -1283,10 +1275,10 @@ function renderOutputsTable(files) {
           <a href="${f.download_url}" download class="btn" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; text-decoration: none;">
             Download
           </a>
-          <button class="btn btn-secondary btn-qr" data-url="${fullDownloadUrl}" data-name="${escapeHtml(f.filename)}" style="padding: 0.35rem 0.75rem; font-size: 0.8rem;">
-            📱 Scan QR
+          <button class="btn btn-secondary btn-copy-link" data-url="${fullDownloadUrl}" style="padding: 0.35rem 0.65rem; font-size: 0.8rem;" title="Copy Download Link">
+            📋 Copy Link
           </button>
-          <button class="btn btn-danger btn-del" data-name="${escapeHtml(f.filename)}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem;">
+          <button class="btn btn-danger btn-del" data-name="${escapeHtml(f.filename)}" style="padding: 0.35rem 0.6rem; font-size: 0.8rem;" title="Delete APK">
             🗑️
           </button>
         </div>
@@ -1295,9 +1287,13 @@ function renderOutputsTable(files) {
     tbody.appendChild(tr);
   });
 
-  document.querySelectorAll(".btn-qr").forEach(btn => {
+  document.querySelectorAll(".btn-copy-link").forEach(btn => {
     btn.addEventListener("click", () => {
-      showQrModal(btn.dataset.url, btn.dataset.name);
+      navigator.clipboard.writeText(btn.dataset.url).then(() => {
+        const origText = btn.textContent;
+        btn.textContent = "✅ Copied!";
+        setTimeout(() => { btn.textContent = origText; }, 2000);
+      });
     });
   });
 
@@ -1310,23 +1306,6 @@ function renderOutputsTable(files) {
       }
     });
   });
-}
-
-function showQrModal(url, filename) {
-  const modal = document.getElementById("qr-modal");
-  const container = document.getElementById("qrcode-container");
-  const urlText = document.getElementById("qr-url-text");
-
-  container.innerHTML = "";
-  urlText.textContent = url;
-
-  new QRCode(container, {
-    text: url,
-    width: 220,
-    height: 220,
-  });
-
-  modal.classList.add("active");
 }
 
 function setupSystem() {

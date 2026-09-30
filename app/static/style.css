@@ -552,18 +552,6 @@ main {
   margin-bottom: 0.5rem;
 }
 
-.qr-box {
-  background-color: white;
-  padding: 1rem;
-  border-radius: 12px;
-  display: inline-block;
-  margin: 1.25rem 0;
-}
-
-.qr-box canvas {
-  display: block;
-}
-
 @media (max-width: 640px) {
   header {
     flex-direction: column;

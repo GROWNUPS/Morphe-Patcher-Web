@@ -6,7 +6,6 @@
   <title>Morphe Patcher Web</title>
   <link rel="icon" type="image/png" href="/static/logo.png">
   <link rel="stylesheet" href="/static/style.css">
-  <script src="/static/qrcode.min.js"></script>
   <script>
     (function() {
       try {
@@ -378,7 +377,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
           <div>
             <h2 class="card-title">Patched APK Library</h2>
-            <p class="card-desc" style="margin-bottom: 0;">Completed APKs saved to <code>/output</code>. Scan the QR code to install directly on your phone!</p>
+            <p class="card-desc" style="margin-bottom: 0;">Completed APKs saved to <code>/output</code>. Download directly or copy the download link.</p>
           </div>
           <button id="btn-refresh-outputs" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Refresh</button>
         </div>
@@ -571,23 +570,6 @@
     </section>
 
   </main>
-
-  <!-- QR Code Modal -->
-  <div id="qr-modal" class="modal-overlay">
-    <div class="modal-box">
-      <h3 class="modal-title">Install on Phone</h3>
-      <p style="font-size: 0.85rem; color: var(--text-muted);">Scan this QR code with your Android camera or QR scanner to download directly onto your device.</p>
-      
-      <div id="qrcode-container" class="qr-box"></div>
-      
-      <div style="font-family: monospace; font-size: 0.8rem; word-break: break-all; margin-bottom: 1rem; color: var(--text-muted);" id="qr-url-text"></div>
-      
-      <div style="display: flex; gap: 0.75rem; justify-content: center;">
-        <button id="btn-copy-qr-link" class="btn btn-secondary">Copy Link</button>
-        <button id="btn-close-qr" class="btn">Close</button>
-      </div>
-    </div>
-  </div>
 
   <script src="/static/app.js"></script>
 </body>
