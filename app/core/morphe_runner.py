@@ -82,6 +82,10 @@ class MorpheRunner:
             for p in exclude_patches:
                 cmd.extend(["--disable", p])
 
+        temp_dir = CACHE_DIR / "tmp"
+        temp_dir.mkdir(parents=True, exist_ok=True)
+        cmd.extend(["-t", str(temp_dir)])
+
         cmd.append(str(input_apk))
         return cmd
 
@@ -123,11 +127,20 @@ class MorpheRunner:
             log_callback(f"[INFO] Command: {cmd_display}", 5, "INITIALIZING")
 
         try:
+            morphe_data_dir = CACHE_DIR / "morphe"
+            morphe_tmp_dir = CACHE_DIR / "tmp"
+            morphe_data_dir.mkdir(parents=True, exist_ok=True)
+            morphe_tmp_dir.mkdir(parents=True, exist_ok=True)
+
+            sub_env = os.environ.copy()
+            sub_env["MORPHE_DATA_DIR"] = str(morphe_data_dir)
+
             self.current_process = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
                 cwd=str(CACHE_DIR),
+                env=sub_env,
             )
 
             current_phase = "STARTING"

@@ -16,11 +16,14 @@ if ! id -u morphe >/dev/null 2>&1; then
     useradd -u "$PUID" -g "$PGID" -d /app -s /bin/bash morphe
 fi
 
-# Ensure critical directories exist
-mkdir -p /app/watch /app/output /app/config /app/cache /app/config/keystore /app/config/profiles
+# Ensure critical directories exist (including morphe data working directories)
+mkdir -p /app/morphe /app/cache/morphe /app/cache/tmp /app/watch /app/output /app/config /app/cache /app/config/keystore /app/config/profiles
 
 # Fix directory ownership
-chown -R "$PUID":"$PGID" /app/watch /app/output /app/config /app/cache
+chown "$PUID":"$PGID" /app
+chown -R "$PUID":"$PGID" /app/morphe /app/cache /app/watch /app/output /app/config
+chmod 775 /app
+chmod -R 775 /app/morphe /app/cache /app/watch /app/output /app/config
 
 # Auto-download Morphe Desktop JAR if not mounted or cached
 MORPHE_VERSION=${MORPHE_VERSION:-v1.17.0}
@@ -55,11 +58,20 @@ except Exception as e:
 " || true
 fi
 
-# Set permissions
-chmod -R 775 /app/watch /app/output /app/config /app/cache
+# Set permissions and ownership on JAR if present
+if [ -f "/app/morphe-desktop.jar" ]; then
+    chown "$PUID":"$PGID" /app/morphe-desktop.jar 2>/dev/null || true
+    chmod 664 /app/morphe-desktop.jar 2>/dev/null || true
+fi
+
+# Ensure MORPHE_DATA_DIR environment variable is set
+export MORPHE_DATA_DIR="${MORPHE_DATA_DIR:-/app/cache/morphe}"
+mkdir -p "$MORPHE_DATA_DIR"
+chown -R "$PUID":"$PGID" "$MORPHE_DATA_DIR"
+chmod -R 775 "$MORPHE_DATA_DIR"
 
 echo "[INFO] Launching Uvicorn ASGI Server on port ${PORT:-8080}..."
 
-# Execute server as the specified user
+# Execute server as the specified user with MORPHE_DATA_DIR exported
 exec gosu "$PUID":"$PGID" python3 -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8080}"
 

@@ -8,6 +8,7 @@ WATCH_DIR = Path(os.getenv("WATCH_DIR", "/app/watch" if os.path.exists("/app") e
 OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", "/app/output" if os.path.exists("/app") else str(BASE_DIR / "output")))
 CONFIG_DIR = Path(os.getenv("CONFIG_DIR", "/app/config" if os.path.exists("/app") else str(BASE_DIR / "config")))
 CACHE_DIR = Path(os.getenv("CACHE_DIR", "/app/cache" if os.path.exists("/app") else str(BASE_DIR / "cache")))
+MORPHE_DATA_DIR = Path(os.getenv("MORPHE_DATA_DIR", str(CACHE_DIR / "morphe")))
 
 KEYSTORE_DIR = CONFIG_DIR / "keystore"
 PROFILES_DIR = CONFIG_DIR / "profiles"
@@ -15,8 +16,10 @@ PATCHES_DIR = CONFIG_DIR / "patches"
 KEYSTORE_CONFIG_FILE = KEYSTORE_DIR / "keystore_config.json"
 
 # Ensure directories exist
-for directory in [WATCH_DIR, OUTPUT_DIR, CONFIG_DIR, CACHE_DIR, KEYSTORE_DIR, PROFILES_DIR, PATCHES_DIR]:
+for directory in [WATCH_DIR, OUTPUT_DIR, CONFIG_DIR, CACHE_DIR, MORPHE_DATA_DIR, KEYSTORE_DIR, PROFILES_DIR, PATCHES_DIR]:
     directory.mkdir(parents=True, exist_ok=True)
+
+os.environ["MORPHE_DATA_DIR"] = str(MORPHE_DATA_DIR)
 
 # Morphe Desktop / CLI JAR resolution
 MORPHE_JAR = os.getenv("MORPHE_JAR_PATH")
