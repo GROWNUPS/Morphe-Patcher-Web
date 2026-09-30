@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 
 from app.config import CACHE_DIR, LIBRARY_DIR
+from app.core.apk_inspector import format_file_size
 from app.core.apk_library import (
     list_library_apks,
     get_library_apk,
@@ -26,7 +27,14 @@ class SaveUploadedRequest(BaseModel):
 async def get_all_library_apks():
     """Returns list of all persistent base APKs stored in the library."""
     try:
-        return list_library_apks()
+        apks = list_library_apks()
+        total_size = sum(a.get("file_size", 0) for a in apks)
+        return {
+            "apks": apks,
+            "count": len(apks),
+            "total_size_bytes": total_size,
+            "total_size_human": format_file_size(total_size),
+        }
     except Exception as e:
         logger.error(f"Error listing library APKs: {e}")
         raise HTTPException(status_code=500, detail=str(e))

@@ -2459,16 +2459,37 @@ async function loadApkLibrary() {
     if (!res.ok) return;
     const data = await res.json();
 
-    libraryApksCache = data.apks || [];
+    if (Array.isArray(data)) {
+      libraryApksCache = data;
+    } else if (data && Array.isArray(data.apks)) {
+      libraryApksCache = data.apks;
+    } else {
+      libraryApksCache = [];
+    }
+
+    const count = libraryApksCache.length;
+    let sizeHuman = "0 B";
+    if (data && data.total_size_human) {
+      sizeHuman = data.total_size_human;
+    } else {
+      let bytes = libraryApksCache.reduce((sum, item) => sum + (item.file_size || 0), 0);
+      const units = ["B", "KB", "MB", "GB"];
+      let uIdx = 0;
+      while (bytes >= 1024 && uIdx < units.length - 1) {
+        bytes /= 1024;
+        uIdx++;
+      }
+      sizeHuman = `${bytes.toFixed(1)} ${units[uIdx]}`;
+    }
 
     const badge = document.getElementById("library-storage-badge");
     const countEl = document.getElementById("library-count");
 
     if (badge) {
-      badge.textContent = `${data.count} APKs • ${data.total_size_human}`;
+      badge.textContent = `${count} APKs • ${sizeHuman}`;
     }
     if (countEl) {
-      countEl.textContent = `${data.count}`;
+      countEl.textContent = `${count}`;
     }
 
     populateQuickLibrarySelect();
