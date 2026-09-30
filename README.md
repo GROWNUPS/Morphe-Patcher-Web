@@ -34,10 +34,10 @@
 | ![Preset Profiles](docs/screenshots/03-preset-profiles.png) | ![Output APK Page](docs/screenshots/04-output-apk.png) |
 | *Configure per-app custom name, icon, output filename templates and more* | *Completed APK library, one-click downloads* |
 
-| 5. Hot Folder Watcher | 6. Settings Page — Keystore & Patches |
+| 5. Base APK Page | 6. Settings Page — Keystore & Patches |
 | :---: | :---: |
-| ![Hot Folder Watcher](docs/screenshots/05-hot-folder-watcher.png) | ![Settings Page - Keystore & Patches](docs/screenshots/06-settings-keystore-patches.png) |
-| *Automated directory daemon monitoring incoming files and auto-patching jobs* | *In-app 1-click patch bundle updates and persistent Android signing keystore management* |
+| ![Base APK Page](docs/screenshots/05-base-apk.png) | ![Settings Page - Keystore & Patches](docs/screenshots/06-settings-keystore-patches.png) |
+| *Persistent library of unpatched base APKs saved on your library.* | *Patch bundle updates, custom keystore management & Hot Folder (autopilot patch)* |
 
 
 
