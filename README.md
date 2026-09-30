@@ -15,7 +15,7 @@
 </p>
 
 > ⚠️ **Disclaimer & Trademark Notice:**  
-> **Patchium** is an independent, open-source Web GUI wrapper compatible with the Morphe CLI. Patchium **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware (BYOA — Bring Your Own APK).  
+> **Patchium** is an independent, open-source Web GUI wrapper compatible with the Morphe CLI. Patchium **does not** host, bundle, or distribute any proprietary APKs, pre-patched binaries, or third-party patches. Users must supply their own legitimate base APKs to patch locally on their own private hardware.  
 > Patchium is not affiliated with, endorsed by, or sponsored by Morphe. Morphe and all related trademarks are the property of their respective owners.
 
 <p align="center"><sub><i>🤖 This project was built with AI assistance and is intended for personal use. It may contain bugs or rough edges. Review the code and use it at your own risk, especially before exposing it beyond your local network 🤖</i></sub></p>
